@@ -1,6 +1,6 @@
 import usuarioService from '../services/usuarioService.js';
 
-const registrarDatosJugador = async (req, res) => {
+export const registrarDatosJugador = async (req, res) => {
   try {
     // body: JSON desde el casino
     const datos = req.body;
@@ -29,4 +29,3 @@ const registrarDatosJugador = async (req, res) => {
   }
 };
 
-export default { registrarDatosJugador };

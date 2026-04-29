@@ -1,7 +1,7 @@
 {
-  "name": "pokeback",
+  "name": "mi_casino",
   "version": "1.0.0",
-  "description": "Proyecto Backend – Plataforma de Juegos y Tienda Pokémon Descripción",
+  "description": "Proyecto Backend individual Casino y modelo",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
