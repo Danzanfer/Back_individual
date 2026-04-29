@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tienda ✦</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/shared.css"/>
+  <link rel="stylesheet" href="css/minijuegos.css"/>
+  <script>
+    (function() {
+      try {
+        var raw = localStorage.getItem('jugador_actual');
+        var jugador = raw ? JSON.parse(raw) : null;
+        if (!jugador || !jugador.id) window.location.replace('login.html');
+      } catch(e) { window.location.replace('login.html'); }
+    })();
+  </script>
+  <style>
+    .buscador-wrap {
+      display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.8rem;
+    }
+    .buscador {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.5rem 0.8rem;
+      color: var(--text); font-family: var(--mono); font-size: 0.65rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .buscador:focus { border-color: var(--gold); }
+    .buscador::placeholder { color: var(--muted); }
+    .buscador-count { font-family: var(--mono); font-size: 0.58rem; color: var(--muted); white-space: nowrap; }
+    .compra-item.oculto { display: none; }
+  </style>
+</head>
+<body>
+
+<nav class="nav-global">
+  <a href="index.html" class="nav-logo">✦ BLACKJACK</a>
+  <div class="nav-links">
+    <span class="coins-badge">🪙 <span data-wallet>100</span></span>
+    <a href="index.html"      class="nav-link">Mesa</a>
+    <a href="minijuegos.html" class="nav-link">Mini juegos</a>
+    <a href="tabla.html"      class="nav-link">Vectores</a>
+  </div>
+</nav>
+
+<div class="page-tienda">
+
+  <div class="page-header">
+    <h1>🪙 Tienda</h1>
+    <p>Simulación — no se realizan cobros reales</p>
+  </div>
+
+  <div class="paquetes">
+
+    <div class="paquete" data-coins="20" data-precio="0.29" data-nombre="Mini">
+      <div class="paquete-icono">🪙</div>
+      <div class="paquete-coins">20 coins</div>
+      <div class="paquete-nombre">Mini</div>
+      <div class="paquete-precio">€0.29</div>
+      <button class="btn btn-ghost btn-comprar">Comprar</button>
+    </div>
+
+    <div class="paquete" data-coins="50" data-precio="0.59" data-nombre="Básico">
+      <div class="paquete-icono">🪙</div>
+      <div class="paquete-coins">50 coins</div>
+      <div class="paquete-nombre">Básico</div>
+      <div class="paquete-precio">€0.59</div>
+      <button class="btn btn-ghost btn-comprar">Comprar</button>
+    </div>
+
+    <div class="paquete popular" data-coins="75" data-precio="0.79" data-nombre="Popular">
+      <div class="paquete-badge">MÁS POPULAR</div>
+      <div class="paquete-icono">💰</div>
+      <div class="paquete-coins">75 coins</div>
+      <div class="paquete-nombre">Popular</div>
+      <div class="paquete-precio"><span class="tachado">€0.99</span>€0.79</div>
+      <button class="btn btn-gold btn-comprar">Comprar</button>
+    </div>
+
+    <div class="paquete" data-coins="100" data-precio="0.99" data-nombre="Starter">
+      <div class="paquete-icono">💎</div>
+      <div class="paquete-coins">100 coins</div>
+      <div class="paquete-nombre">Starter</div>
+      <div class="paquete-precio">€0.99</div>
+      <button class="btn btn-ghost btn-comprar">Comprar</button>
+    </div>
+
+  </div>
+
+  <div class="historial-compras">
+    <h3>// historial de compras</h3>
+    <div class="buscador-wrap">
+      <input type="text" class="buscador" id="buscador" placeholder="Buscar por paquete, fecha, coins..."/>
+      <span class="buscador-count" id="buscador-count"></span>
+    </div>
+    <div id="historial-lista">
+      <div class="compra-item"><span class="compra-key">sin compras aún</span></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay hidden" id="modal-compra">
+  <div class="modal">
+    <h2 style="color:var(--green);text-align:center">✓ Compra simulada</h2>
+    <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--gold);text-align:center" id="modal-coins-val"></div>
+    <button class="btn btn-gold" id="modal-ok">Entendido</button>
+  </div>
+</div>
+
+<script src="js/errores.js"></script>
+<script src="js/coins.js"></script>
+<script>
+  let historial = [];
+  try { historial = storageGet('tienda_historial') || []; }
+  catch(e) { manejarError(e, 'tienda/cargarHistorial'); }
+
+  function renderHistorial(filtro = '') {
+    const lista    = document.getElementById('historial-lista');
+    const countEl  = document.getElementById('buscador-count');
+
+    if (!historial.length) {
+      lista.innerHTML = '<div class="compra-item"><span class="compra-key">sin compras aún</span></div>';
+      countEl.textContent = '';
+      return;
+    }
+
+    const term = filtro.toLowerCase().trim();
+    let visibles = 0;
+
+    lista.innerHTML = historial.slice().reverse().map(c => {
+      const fecha  = new Date(c.ts).toLocaleString('es-ES');
+      const buscar = `${fecha} ${c.nombre} ${c.coins} ${c.precio}`.toLowerCase();
+      const oculto = term && !buscar.includes(term);
+      if (!oculto) visibles++;
+      return `<div class="compra-item ${oculto ? 'oculto' : ''}">
+        <span class="compra-key">${fecha} — ${c.nombre}</span>
+        <span class="compra-val">+${c.coins} 🪙</span>
+      </div>`;
+    }).join('');
+
+    countEl.textContent = term
+      ? `${visibles} de ${historial.length}`
+      : `${historial.length} compras`;
+  }
+
+  document.querySelectorAll('.btn-comprar').forEach(btn => {
+    btn.addEventListener('click', () => {
+      try {
+        const paquete = btn.closest('.paquete');
+        const coins   = parseInt(paquete.dataset.coins);
+        const precio  = paquete.dataset.precio;
+        const nombre  = paquete.dataset.nombre;
+        if (isNaN(coins) || coins <= 0) throw new ValidationError('Coins inválidas', 'coins');
+        Coins.sumar(coins);
+        historial.push({ ts: Date.now(), nombre, coins, precio });
+        storageSet('tienda_historial', historial);
+        document.getElementById('modal-coins-val').textContent = `+${coins} 🪙`;
+        document.getElementById('modal-compra').classList.remove('hidden');
+        renderHistorial(document.getElementById('buscador').value);
+      } catch(e) { manejarError(e, 'tienda/comprar'); }
+    });
+  });
+
+  document.getElementById('modal-ok').addEventListener('click', () => {
+    document.getElementById('modal-compra').classList.add('hidden');
+    Coins.init();
+  });
+
+  document.getElementById('buscador').addEventListener('input', e => {
+    renderHistorial(e.target.value);
+  });
+
+  Coins.init();
+  renderHistorial();
+</script>
+</body>
+</html>

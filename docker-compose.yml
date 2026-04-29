@@ -1,0 +1,42 @@
+services
+  # Base de Datos (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: mi_casino_db_container
+    restart: always
+    environment:
+      POSTGRES_USER: admin_casino
+      POSTGRES_PASSWORD: casino_pass_2026
+      POSTGRES_DB: mi_casino_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - mi_casino_data:/var/lib/postgresql/data
+
+  # Administrador pgAdmin
+  # Acceso: http://localhost:5050
+  mi_casino_admin:
+    image: dpage/pgadmin4
+    container_name: mi_casino_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@casino.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+  # Modelo en Python + Flask
+  mi_casino_flask:
+    build: ./python_ia
+    container_name: mi_casino_flask_container
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://admin_casino:casino_pass_2026@db:5432/mi_casino_db
+    depends_on:
+      - db
+
+volumes:
+  mi_casino_data:

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tienda ✦</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/shared.css"/>
+  <link rel="stylesheet" href="css/minijuegos.css"/>
+</head>
+<body>
+
+<nav class="nav-global">
+  <a href="index.html" class="nav-logo">✦ BLACKJACK</a>
+  <div class="nav-links">
+    <span class="coins-badge">🪙 <span data-coins>100</span></span>
+    <a href="index.html"      class="nav-link">Mesa</a>
+    <a href="minijuegos.html" class="nav-link">Mini juegos</a>
+  </div>
+</nav>
+
+<div class="page-tienda">
+
+  <div class="page-header">
+    <h1>🪙 Tienda</h1>
+    <p>Simulación — no se realizan cobros reales</p>
+  </div>
+
+  <div class="paquetes">
+
+    <div class="paquete" data-coins="75" data-precio="0.99" data-nombre="Starter">
+      <div class="paquete-icono">🪙</div>
+      <div class="paquete-coins">75 coins</div>
+      <div class="paquete-nombre">Starter</div>
+      <div class="paquete-precio">€0.99</div>
+      <button class="btn btn-ghost btn-comprar">Comprar</button>
+    </div>
+
+    <div class="paquete popular" data-coins="400" data-precio="3.99" data-nombre="Popular">
+      <div class="paquete-badge">MÁS POPULAR</div>
+      <div class="paquete-icono">💰</div>
+      <div class="paquete-coins">400 coins</div>
+      <div class="paquete-nombre">Popular</div>
+      <div class="paquete-precio"><span class="tachado">€4.99</span>€3.99</div>
+      <button class="btn btn-gold btn-comprar">Comprar</button>
+    </div>
+
+    <div class="paquete" data-coins="1000" data-precio="7.99" data-nombre="Pro">
+      <div class="paquete-icono">💎</div>
+      <div class="paquete-coins">1000 coins</div>
+      <div class="paquete-nombre">Pro</div>
+      <div class="paquete-precio"><span class="tachado">€11.99</span>€7.99</div>
+      <button class="btn btn-ghost btn-comprar">Comprar</button>
+    </div>
+
+    <div class="paquete" data-coins="2500" data-precio="14.99" data-nombre="Whale">
+      <div class="paquete-icono">🐋</div>
+      <div class="paquete-coins">2500 coins</div>
+      <div class="paquete-nombre">Whale</div>
+      <div class="paquete-precio"><span class="tachado">€29.99</span>€14.99</div>
+      <button class="btn btn-ghost btn-comprar">Comprar</button>
+    </div>
+
+  </div>
+
+  <div class="historial-compras">
+    <h3>// historial</h3>
+    <div id="historial-lista">
+      <div class="compra-item"><span class="compra-key">sin compras aún</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CONFIRMACIÓN -->
+<div class="modal-overlay hidden" id="modal-compra">
+  <div class="modal">
+    <h2 style="color:var(--green);text-align:center">✓ Compra simulada</h2>
+    <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--gold);text-align:center" id="modal-coins-val"></div>
+    <button class="btn btn-gold" id="modal-ok">Entendido</button>
+  </div>
+</div>
+
+<script src="js/coins.js"></script>
+<script>
+const historial = JSON.parse(localStorage.getItem('tienda_historial') || '[]');
+
+function renderHistorial() {
+  const lista = document.getElementById('historial-lista');
+  if (!historial.length) {
+    lista.innerHTML = '<div class="compra-item"><span class="compra-key">sin compras aún</span></div>';
+    return;
+  }
+  lista.innerHTML = historial.slice().reverse().map(c => `
+    <div class="compra-item">
+      <span class="compra-key">${new Date(c.ts).toLocaleTimeString('es-ES')} — ${c.nombre}</span>
+      <span class="compra-val">+${c.coins} 🪙</span>
+    </div>`).join('');
+}
+
+document.querySelectorAll('.btn-comprar').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const paquete = btn.closest('.paquete');
+    const coins   = parseInt(paquete.dataset.coins);
+    const precio  = paquete.dataset.precio;
+    const nombre  = paquete.dataset.nombre;
+
+    Coins.sumar(coins);
+    historial.push({ ts: Date.now(), nombre, coins, precio });
+    localStorage.setItem('tienda_historial', JSON.stringify(historial));
+
+    document.getElementById('modal-coins-val').textContent = `+${coins} 🪙`;
+    document.getElementById('modal-compra').classList.remove('hidden');
+    renderHistorial();
+  });
+});
+
+document.getElementById('modal-ok').addEventListener('click', () => {
+  document.getElementById('modal-compra').classList.add('hidden');
+  Coins.init();
+});
+
+Coins.init();
+renderHistorial();
+</script>
+</body>
+</html>

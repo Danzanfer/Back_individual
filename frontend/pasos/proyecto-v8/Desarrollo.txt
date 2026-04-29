@@ -1,0 +1,46 @@
+# Blackjack — Documentación de desarrollo
+
+## 1. Descripción del proyecto
+Juego de blackjack en vanilla JS con tres capas de propósito:
+- Entretenimiento: mesa funcional con apuestas variables.
+- Conductual: minijuegos (BART, memoria, frecuencias) que recopilan datos psicológicos.
+- Educativo/crítico: expone modelos de monetización y valor de datos conductuales.
+
+## 2. Estructura de archivos
+- login.html: entrada y generación de ID.
+- index.html: mesa de juego principal.
+- minijuegos.html: acceso a BART, memoria y frecuencias.
+- tabla.html: visualización de vectores de datos.
+- js/: módulos de lógica (errores, coins, blackjack, bart, etc.).
+
+## 3. Historia del desarrollo
+- Fase 1: Creación de avatar SVG manipulable mediante el DOM y guardado en localStorage.
+- Fase 2: Implementación de minijuegos conductuales (BART para riesgo, Memoria para eficiencia cognitiva, y Frecuencias para edad biológica).
+- Fase 3: Blackjack con lógica de mazo Fisher-Yates y animaciones CSS.
+- Fase 4: Integración de APIs de clima y geolocalización (ip-api y wttr.in) para el vector final.
+
+## 4. Decisiones técnicas
+- Uso exclusivo de Vanilla JS sin frameworks por requisitos formativos.
+- Modularidad: un archivo JS por cada lógica de juego.
+- Persistencia total en LocalStorage ante la falta de base de datos/backend.
+
+## 5. Bugs y Soluciones
+- El "Estroboscopio": Loop de redirección corregido moviendo el guard de sesión al <head> y usando replace().
+- Timers de memoria: Los intervalos activos interferían al cambiar de juego; se solucionó con funciones de limpieza global.
+- Re-renderizado: El timer de memoria causaba saltos visuales; se arregló actualizando solo el nodo del DOM necesario.
+
+## 6. Sistema de economía
+- Inicio: 100 coins.
+- Ganancias: Apuestas de blackjack (1.5x natural) y recompensas por minijuegos.
+- Tienda: Paquetes simulados de 20 a 100 coins.
+
+## 7. Minijuegos Conductuales
+- BART: Mide tolerancia al riesgo mediante el promedio de inflado de globos (BART ajustado).
+- Memoria: Mide memoria de trabajo y velocidad de procesamiento mediante eficiencia (pares/intentos).
+- Frecuencias: Mide pérdida auditiva mediante barrido logarítmico para estimar edad biológica.
+
+## 8. Datos Recopilados (Vector)
+Incluye ID del jugador, localización, clima actual, estadísticas de blackjack (partidas, racha), métricas de riesgo (BART), cognitivas (memoria), biológicas (audición) y saldo actual.
+
+## 9. Flujo de Git
+Desarrollo basado en ramas feature/ para CSS, JS y HTML, integradas en una rama dev antes del merge final a main.
