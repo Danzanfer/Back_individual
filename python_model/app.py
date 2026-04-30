@@ -28,28 +28,41 @@ def predict():
     try:
         data = request.get_json()
         
-        # 1. Extraer los datos con los nombres del model.py
-        # Usar .get() para evitar errores si falta una llave
+        # 1. Extraer los datos
         input_dict = {
-            'bart_riesgo': data.get('bart_riesgo'),
-            'mem_eficiencia': data.get('mem_eficiencia'),
-            'bj_winrate': data.get('bj_winrate'),
-            'coins': data.get('coins')
+            'bart_riesgo': data.get('bart_riesgo', 0.5),
+            'mem_eficiencia': data.get('mem_eficiencia', 80),
+            'bj_winrate': data.get('bj_winrate', 0.5),
+            'coins': data.get('coins', 100)
         }
         
-        # 2. Crear DataFrame respetando el orden de entrenamiento
+        # 2. Crear DataFrame
         features = ['bart_riesgo', 'mem_eficiencia', 'bj_winrate', 'coins']
         df_input = pd.DataFrame([input_dict])[features]
         
         # 3. Escalar y predecir
         df_scaled = scaler.transform(df_input)
-        cluster = model.predict(df_scaled)
+        cluster = int(model.predict(df_scaled)[0])
         
+        # Configuración de fichas según el perfil 
+        opciones_por_perfil = {
+            0: [2, 5, 10, 20],      # Perfil 0: Conservador
+            1: [5, 10, 25, 50],     # Perfil 1: Estándar
+            2: [10, 50, 100, 200]   # Perfil 2: Arriesgado
+        }
+        
+        fichas = opciones_por_perfil.get(cluster, [5, 10, 25, 50])
+        
+        # 4. Respuesta estructurada para el AdaptadorUI
         return jsonify({
             'status': 'success',
-            'perfil_jugador': int(cluster[0]), # 0, 1 o 2
-            'mensaje': 'Predicción realizada con éxito'
-        })
+            'perfil_ia': cluster,
+            'mensaje': 'Análisis de comportamiento guardado',
+            'configuracion_juego': {
+                'chips': fichas,
+                'layout': 'adaptativo'
+            }
+        }), 201 
 
     except Exception as e:
         return jsonify({'error': f"Error en los datos: {str(e)}"}), 400

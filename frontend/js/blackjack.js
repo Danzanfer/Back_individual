@@ -130,11 +130,29 @@ function repartir() {
 
 function hit() {
   if (!g.activo) return;
+
+  
+  const scoreAntesDePedir = calcMano(g.manoJ);
+  if (scoreAntesDePedir >= 17) {
+    console.log("Riesgo detectado: Hit con " + scoreAntesDePedir);
+    
+    
+    let stats = JSON.parse(localStorage.getItem('bj_stats') || '{}');
+    
+    
+    stats.decisiones_riesgo = (stats.decisiones_riesgo || 0) + 1;
+    stats.ultimo_score_riesgo = scoreAntesDePedir;
+    
+    
+    localStorage.setItem('bj_stats', JSON.stringify(stats));
+  }
+
   g.manoJ.push(robar());
   renderMano('mano-jugador', g.manoJ);
   actualizarScores(true);
   if (calcMano(g.manoJ) > 21) terminar('bust-j');
 }
+
 
 async function stand() {
   if (!g.activo) return;
@@ -252,3 +270,18 @@ function bjInit() {
   bjBindChips();
   bjBindBotones();
 }
+
+window.bjActualizarApuestaSeleccionada = function(valor) {
+    // Actualiza el valor numérico en el objeto global del juego 
+    if (typeof g !== 'undefined') {
+        g.apuesta = parseInt(valor);
+    }
+    
+    // Actualiza visualmente el número de la apuesta en el display
+    const display = document.getElementById('apuesta-display');
+    if (display) {
+        display.textContent = valor;
+    }
+    
+    console.log("Juego sincronizado:", valor);
+};

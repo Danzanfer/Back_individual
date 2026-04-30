@@ -8,13 +8,6 @@
   <link rel="stylesheet" href="css/shared.css"/>
   <link rel="stylesheet" href="css/blackjack.css"/>
 
-  <!--
-    GUARD DE SESIÓN — corre PRIMERO, antes de cualquier otro script.
-    Usa localStorage directamente, sin depender de errores.js ni de
-    ningún otro módulo. Si no hay sesión válida, redirige y para todo.
-    window.location.replace() no deja la página en el historial del navegador,
-    evitando el loop.
-  -->
   <script>
     (function() {
       try {
@@ -65,6 +58,7 @@
   <div class="apuesta-row">
     <span class="apuesta-label">apuesta:</span>
     <div class="apuesta-chips">
+      <!-- Estos botones serán reemplazados por AdaptadorUI si la IA responde -->
       <button class="chip" data-val="5">5</button>
       <button class="chip activa" data-val="10">10</button>
       <button class="chip" data-val="25">25</button>
@@ -122,38 +116,65 @@
   </div>
 </div>
 
-<!-- Scripts al final del body para que el DOM esté listo -->
 <script src="js/errores.js"></script>
+<script src="js/api.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/coins.js"></script>
 <script src="js/blackjack.js"></script>
 
-
 <script>
-  (function init() {
-    // mostrar usuario en nav
+  (async function init() {
     try {
-      var jugador = JSON.parse(localStorage.getItem('jugador_actual'));
+      var raw = localStorage.getItem('jugador_actual');
+      var jugador = raw ? JSON.parse(raw) : null;
+      
       if (jugador && jugador.username) {
         document.getElementById('nav-usuario').textContent = jugador.username;
-      }
-    } catch(e) {}
 
-    // logout
-    document.getElementById('nav-logout').addEventListener('click', function(e) {
-      e.preventDefault();
-      localStorage.removeItem('jugador_actual');
-      window.location.replace('login.html');
-    });
+        const statsBJ = JSON.parse(localStorage.getItem('bj_stats') || '{}');
+        const payloadIA = {
+          jugador_actual: jugador,
+          datos_conductuales: {
+            "BART: score ajustado": localStorage.getItem('bart_score') || 0.5,
+            "Memoria: eficiencia": localStorage.getItem('mem_score') || 80
+          },
+          bj_stats: statsBJ,
+          coins: parseInt(localStorage.getItem('casino_coins') || 100)
+        };
+        console.log("Payload que se enviará a la IA:", JSON.stringify(payloadIA, null, 2));
+        console.log("Solicitando perfil adaptativo...");
+        
+        const respuesta = await casinoApi.enviarPerfil(payloadIA);
 
-    // inicializar juego
-    bjInit();
+        if (respuesta) {
+          AdaptadorUI.aplicarConfiguracion(respuesta);
+          console.log("Intento de adaptación por IA ejecutado");
+        }
+      } 
+    } catch(e) {
+      console.error("Error en inicialización adaptativa:", e);
+    }
 
-    // weather en background — fallo silencioso
-    Weather.obtener().catch(function(e) {
-      manejarError(e, 'index/weather');
-    });
+    const logoutBtn = document.getElementById('nav-logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        localStorage.removeItem('jugador_actual');
+        window.location.replace('login.html');
+      });
+    }
+
+    if (typeof bjInit === 'function') {
+      bjInit(); 
+    }
+
+    if (typeof Weather !== 'undefined') {
+      Weather.obtener().catch(function(e) {
+        if (typeof manejarError === 'function') manejarError(e, 'index/weather');
+      });
+    }
   })();
 </script>
+
 </body>
 </html>
