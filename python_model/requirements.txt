@@ -1,6 +1,5 @@
 flask
-psycopg2-binary
+flask-cors
 pandas
 scikit-learn
 joblib
-sqlalchemy

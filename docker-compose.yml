@@ -1,44 +1,49 @@
 services:
-  # 1. La Base de Datos
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: mi_casino_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
   db:
     image: postgres:15-alpine
     container_name: mi_casino_db_container
-    restart: always
     environment:
       - POSTGRES_USER=admin_casino
       - POSTGRES_PASSWORD=casino_pass_2026
       - POSTGRES_DB=mi_casino_db
-    ports:
-      - "5432:5432"
     volumes:
       - mi_casino_data:/var/lib/postgresql/data
-
-  # 2. Administrador de DB (pgAdmin)
-  mi_casino_admin:
-    image: dpage/pgadmin4
-    container_name: mi_casino_pgadmin
-    restart: always
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@casino.com
-      - PGADMIN_DEFAULT_PASSWORD=root
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5050:80"
-    depends_on:
-      - db
+      - "5432:5432"
 
-  # 3. El Cerebro IA (Python + Flask)
   mi_casino_flask:
     build: ./python_model
     container_name: mi_casino_flask_container
-    restart: always
+    # IMPORTANTE: Mapear la carpeta para que vea los .pkl
+    volumes:
+      - ./python_model:/app
     ports:
       - "5000:5000"
     environment:
       - DATABASE_URL=postgresql://admin_casino:casino_pass_2026@db:5432/mi_casino_db
-    volumes:
-      - ./python_ia:/app
+
+  mi_casino_node:
+    build: ./backend
+    container_name: mi_casino_node_container
     depends_on:
       - db
+      - mi_casino_flask
+    environment:
+      - DB_HOST=db
+      - FLASK_URL=http://mi_casino_flask:5000
+    ports:
+      - "3000:3000"
 
 volumes:
   mi_casino_data:

@@ -28,7 +28,8 @@ const Usuario = db.define('Usuario', {
   ciudad: { type: DataTypes.STRING },
   clima:  { type: DataTypes.STRING }
 }, {
-  timestamps: true 
+  timestamps: true,
+  tableName: 'usuarios'
 });
 
 export default Usuario;
