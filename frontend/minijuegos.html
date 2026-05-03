@@ -66,10 +66,12 @@
 <script src="js/bart.js"></script>
 <script src="js/memoria.js"></script>
 <script src="js/frecuencias.js"></script>
+
 <script>
   (function init() {
     Coins.init();
     renderDatos();
+    bartInit();
 
     // selector de juegos — limpia timers antes de cambiar
     document.querySelectorAll('.juego-card').forEach(function(card) {
@@ -90,7 +92,7 @@
     });
 
     // arrancar BART por defecto
-    bartInit();
+    
   })();
 </script>
 </body>

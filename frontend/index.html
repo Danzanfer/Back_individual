@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/shared.css"/>
   <link rel="stylesheet" href="css/blackjack.css"/>
 
+  <!-- Bloque de seguridad inmediato -->
   <script>
     (function() {
       try {
@@ -36,7 +37,6 @@
 </nav>
 
 <div class="mesa">
-
   <div class="zona">
     <span class="zona-label">dealer</span>
     <div class="mano" id="mano-dealer"></div>
@@ -58,7 +58,6 @@
   <div class="apuesta-row">
     <span class="apuesta-label">apuesta:</span>
     <div class="apuesta-chips">
-      <!-- Estos botones serán reemplazados por AdaptadorUI si la IA responde -->
       <button class="chip" data-val="5">5</button>
       <button class="chip activa" data-val="10">10</button>
       <button class="chip" data-val="25">25</button>
@@ -98,7 +97,6 @@
       <span class="stat-val pos" id="st-racha-max">0</span>
     </div>
   </div>
-
 </div>
 
 <div class="historial">
@@ -116,6 +114,7 @@
   </div>
 </div>
 
+<!-- Carga de Scripts en Orden de Dependencia -->
 <script src="js/errores.js"></script>
 <script src="js/api.js"></script>
 <script src="js/weather.js"></script>
@@ -125,56 +124,76 @@
 <script>
   (async function init() {
     try {
+      // 1. Obtener datos del jugador
       var raw = localStorage.getItem('jugador_actual');
       var jugador = raw ? JSON.parse(raw) : null;
       
       if (jugador && jugador.username) {
         document.getElementById('nav-usuario').textContent = jugador.username;
-
-        const statsBJ = JSON.parse(localStorage.getItem('bj_stats') || '{}');
-        const payloadIA = {
-          jugador_actual: jugador,
-          datos_conductuales: {
-            "BART: score ajustado": localStorage.getItem('bart_score') || 0.5,
-            "Memoria: eficiencia": localStorage.getItem('mem_score') || 80
-          },
-          bj_stats: statsBJ,
-          coins: parseInt(localStorage.getItem('casino_coins') || 100)
-        };
-        console.log("Payload que se enviará a la IA:", JSON.stringify(payloadIA, null, 2));
-        console.log("Solicitando perfil adaptativo...");
-        
-        const respuesta = await casinoApi.enviarPerfil(payloadIA);
-
-        if (respuesta) {
-          AdaptadorUI.aplicarConfiguracion(respuesta);
-          console.log("Intento de adaptación por IA ejecutado");
-        }
-      } 
-    } catch(e) {
-      console.error("Error en inicialización adaptativa:", e);
-    }
-
-    const logoutBtn = document.getElementById('nav-logout');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        localStorage.removeItem('jugador_actual');
+      } else {
         window.location.replace('login.html');
-      });
-    }
+        return;
+      }
 
-    if (typeof bjInit === 'function') {
-      bjInit(); 
-    }
+      // 2. Evento Logout
+      const logoutBtn = document.getElementById('nav-logout');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          localStorage.removeItem('jugador_actual');
+          window.location.replace('login.html');
+        });
+      }
 
-    if (typeof Weather !== 'undefined') {
-      Weather.obtener().catch(function(e) {
-        if (typeof manejarError === 'function') manejarError(e, 'index/weather');
-      });
+      // 3. Inicializar Motor de Juego
+      if (typeof bjInit === 'function') {
+        bjInit(); 
+        console.log("✅ Motor de Blackjack activado");
+      }
+
+      // 4. Clima Opcional
+      if (typeof Weather !== 'undefined' && typeof Weather.obtener === 'function') {
+        Weather.obtener().catch(e => console.error("Error weather:", e));
+      }
+
+    } catch (err) {
+      console.error("❌ Error durante el inicio:", err);
     }
   })();
-</script>
 
+  async function sincronizarPerfilIA() {
+    try {
+      // Validar existencia de la clase Vector antes de operar
+      if (typeof Vector === 'undefined') return;
+      
+      const v = Vector.construir();
+      
+      const payloadIA = {
+        jugador_actual: { id: v.jugador_id, username: v.username },
+        datos_conductuales: {
+          "BART_score": v.bart_score,
+          "Memoria_eficiencia": v.mem_eficiencia
+        },
+        bj_stats: {
+          partidas: v.bj_partidas,
+          ganadas: v.bj_ganadas
+        },
+        coins: v.coins_actuales
+      };
+
+      console.log("📡 Sincronizando con IA...");
+      const respuesta = await casinoApi.enviarPerfil(payloadIA);
+
+      if (respuesta && respuesta.ok) {
+        if (typeof AdaptadorUI !== 'undefined') {
+          AdaptadorUI.aplicarConfiguracion(respuesta);
+          console.log("✨ Interfaz adaptada exitosamente");
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error en sincronización IA:", error);
+    }
+  }
+</script>
 </body>
 </html>
