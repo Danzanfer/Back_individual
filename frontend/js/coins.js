@@ -1,5 +1,5 @@
 const Coins = {
-  INICIAL: 40,
+  INICIAL: 35,
 
   get() {
     const v = localStorage.getItem('coins');
