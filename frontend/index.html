@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blackjack ✦</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/shared.css"/>
+  <link rel="stylesheet" href="css/blackjack.css"/>
+
+  <!-- Bloque de seguridad inmediato -->
+  <script>
+    (function() {
+      try {
+        var raw = localStorage.getItem('jugador_actual');
+        var jugador = raw ? JSON.parse(raw) : null;
+        if (!jugador || !jugador.id) {
+          window.location.replace('login.html');
+        }
+      } catch (e) {
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
+</head>
+<body>
+
+<nav class="nav-global">
+  <a href="index.html" class="nav-logo">✦ BLACKJACK</a>
+  <div class="nav-links">
+    <span class="coins-badge">🪙 <span data-wallet>100</span></span>
+    <span id="nav-usuario" style="font-family:var(--mono);font-size:0.58rem;color:var(--muted)"></span>
+    <a href="minijuegos.html" class="nav-link">Mini juegos</a>
+    <a href="tienda.html"     class="nav-link btn-primary">+ Coins</a>
+    <a href="#"               class="nav-link" id="nav-logout">Salir</a>
+  </div>
+</nav>
+
+<div class="mesa">
+  <div class="zona">
+    <span class="zona-label">dealer</span>
+    <div class="mano" id="mano-dealer"></div>
+    <div class="score-badge" id="score-dealer">?</div>
+  </div>
+
+  <div class="centro-mesa">
+    <div class="linea-mesa"></div>
+    <div style="font-family:var(--mono);font-size:0.6rem;color:rgba(255,255,255,0.2)">VS</div>
+    <div class="linea-mesa"></div>
+  </div>
+
+  <div class="zona">
+    <div class="score-badge" id="score-jugador">0</div>
+    <div class="mano" id="mano-jugador"></div>
+    <span class="zona-label">tú</span>
+  </div>
+
+  <div class="apuesta-row">
+    <span class="apuesta-label">apuesta:</span>
+    <div class="apuesta-chips">
+      <button class="chip" data-val="5">5</button>
+      <button class="chip activa" data-val="10">10</button>
+      <button class="chip" data-val="25">25</button>
+      <button class="chip" data-val="50">50</button>
+      <button class="chip" data-val="100">100</button>
+    </div>
+    <span class="apuesta-total">🪙 <span id="apuesta-display">10</span></span>
+  </div>
+
+  <div id="mensaje">Elige tu apuesta y reparte</div>
+
+  <div class="controles">
+    <button class="btn btn-gold"  id="btn-hit"   disabled>Hit</button>
+    <button class="btn btn-ghost" id="btn-stand" disabled>Stand</button>
+    <button class="btn btn-red"   id="btn-deal">Repartir</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-label">partidas</span>
+      <span class="stat-val" id="st-partidas">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">ganadas</span>
+      <span class="stat-val pos" id="st-ganadas">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">perdidas</span>
+      <span class="stat-val neg" id="st-perdidas">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">racha</span>
+      <span class="stat-val" id="st-racha">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">mejor racha</span>
+      <span class="stat-val pos" id="st-racha-max">0</span>
+    </div>
+  </div>
+</div>
+
+<div class="historial">
+  <h3>// historial</h3>
+  <div class="hist-list" id="hist-list"></div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-sin-coins">
+  <div class="modal">
+    <h2 style="color:var(--red)">🪙 Sin coins</h2>
+    <div class="modal-btns">
+      <a href="minijuegos.html" class="btn btn-gold">Mini juegos</a>
+      <a href="tienda.html"     class="btn btn-ghost">Tienda</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/errores.js"></script>
+<script src="js/coins.js"></script>
+<script src="js/vector.js"></script>
+<script src="js/api.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/blackjack.js"></script>
+
+<script>
+  (async function init() {
+    try {
+      // 1. Obtener datos del jugador
+      var raw = localStorage.getItem('jugador_actual');
+      var jugador = raw ? JSON.parse(raw) : null;
+      
+      if (jugador && jugador.username) {
+        document.getElementById('nav-usuario').textContent = jugador.username;
+      } else {
+        window.location.replace('login.html');
+        return;
+      }
+
+      // 2. Evento Logout
+      const logoutBtn = document.getElementById('nav-logout');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          localStorage.removeItem('jugador_actual');
+          window.location.replace('login.html');
+        });
+      }
+
+      // 3. Inicializar Motor de Juego
+      if (typeof bjInit === 'function') {
+        bjInit(); 
+        console.log("✅ Motor de Blackjack activado");
+      }
+
+      // 4. Clima Opcional
+      if (typeof Weather !== 'undefined' && typeof Weather.obtener === 'function') {
+        Weather.obtener().catch(e => console.error("Error weather:", e));
+      }
+
+    } catch (err) {
+      console.error("❌ Error durante el inicio:", err);
+    }
+  })();
+
+</script>
+</body>
+</html>

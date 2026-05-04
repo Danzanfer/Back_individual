@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mini Juegos ✦</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/shared.css"/>
+  <link rel="stylesheet" href="css/minijuegos.css"/>
+  <script>
+    (function() {
+      try {
+        var raw = localStorage.getItem('jugador_actual');
+        var jugador = raw ? JSON.parse(raw) : null;
+        if (!jugador || !jugador.id) window.location.replace('login.html');
+      } catch(e) { window.location.replace('login.html'); }
+    })();
+  </script>
+</head>
+<body>
+
+<nav class="nav-global">
+  <a href="index.html" class="nav-logo">✦ BLACKJACK</a>
+  <div class="nav-links">
+    <span class="coins-badge">🪙 <span data-wallet>100</span></span>
+    <a href="index.html"  class="nav-link">Mesa</a>
+    <a href="tienda.html" class="nav-link btn-primary">+ Coins</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="juego-selector">
+    <div class="juego-card activo" data-juego="bart">
+      <div class="icono">🎈</div>
+      <div class="nombre">BART</div>
+      <div class="desc">5 globos · 60 segundos</div>
+      <div class="reward">±coins según riesgo</div>
+    </div>
+    <div class="juego-card" data-juego="memoria">
+      <div class="icono">🃏</div>
+      <div class="nombre">Memoria</div>
+      <div class="desc">Encuentra los pares en 60s</div>
+      <div class="reward">hasta +40 🪙</div>
+    </div>
+    <div class="juego-card" data-juego="frecuencias">
+      <div class="icono">👂</div>
+      <div class="nombre">Frecuencias</div>
+      <div class="desc">Barrido auditivo · 3 intentos</div>
+      <div class="reward">+25 🪙 por intento</div>
+    </div>
+  </div>
+
+  <div class="juego-status" id="minijuegos-status"></div>
+  <div class="juego-panel" id="juego-panel"></div>
+
+  <div class="datos-panel">
+    <h3>// datos recopilados</h3>
+    <div id="datos-lista"></div>
+  </div>
+
+</div>
+
+<script src="js/errores.js"></script>
+<script src="js/coins.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/bart.js"></script>
+<script src="js/memoria.js"></script>
+<script src="js/frecuencias.js"></script>
+
+<script>
+  window.JuegosMinijuegos = {
+    keys: ['bart','memoria','frecuencias'],
+    jugado(key) {
+      return localStorage.getItem(`${key}_jugado`) === 'true';
+    },
+    marcarJugado(key) {
+      localStorage.setItem(`${key}_jugado`, 'true');
+      this.actualizarCards();
+    },
+    disponible(key) {
+      return !this.jugado(key);
+    },
+    actualizarCards() {
+      const todasJugadas = this.keys.every(k => this.jugado(k));
+      document.querySelectorAll('.juego-card').forEach(card => {
+        const key = card.dataset.juego;
+        if (this.jugado(key)) {
+          card.classList.add('jugado');
+          card.querySelector('.desc').textContent = 'Ya jugado';
+          card.querySelector('.reward').textContent = 'No disponible';
+          card.style.pointerEvents = 'none';
+          card.style.opacity = '0.45';
+        } else {
+          card.classList.remove('jugado');
+          card.style.pointerEvents = '';
+          card.style.opacity = '';
+        }
+      });
+      const status = document.getElementById('minijuegos-status');
+      if (!status) return;
+      if (todasJugadas) {
+        status.innerHTML = '<div class="status-box">Has jugado todos los minijuegos. Ahora solo puedes comprar en la tienda para obtener más recursos.</div>';
+      } else {
+        status.innerHTML = '<div class="status-box">Juega cada minijuego una vez para recolectar recursos. Después solo queda la tienda.</div>';
+      }
+    }
+  };
+
+  window.marcarMinijuegoJugado = function(key) {
+    window.JuegosMinijuegos.marcarJugado(key);
+  };
+
+  (function init() {
+    Coins.init();
+    renderDatos();
+    JuegosMinijuegos.actualizarCards();
+    if (!JuegosMinijuegos.jugado('bart')) {
+      bartInit();
+    } else if (!JuegosMinijuegos.jugado('memoria')) {
+      memoriaInit();
+    } else if (!JuegosMinijuegos.jugado('frecuencias')) {
+      frecuenciasInit();
+    }
+
+    document.querySelectorAll('.juego-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        const juego = card.dataset.juego;
+        if (!JuegosMinijuegos.disponible(juego)) return;
+
+        bartLimpiar();
+        memoriaLimpiar();
+
+        document.querySelectorAll('.juego-card').forEach(function(c) {
+          c.classList.remove('activo');
+        });
+        card.classList.add('activo');
+
+        if (juego === 'bart')        bartInit();
+        if (juego === 'memoria')     memoriaInit();
+        if (juego === 'frecuencias') frecuenciasInit();
+      });
+    });
+  })();
+</script>
+</body>
+</html>
