@@ -22,14 +22,13 @@ class UsuarioService {
 
       try {
         // Llamada al modelo
-        const respuestaIA = await axios.post('http://mi_casino_flask_container:5000/predict', {
-          bart_riesgo: payload.bart_riesgo,
+        const respuestaIA = await axios.post(`${process.env.FLASK_URL}/predict`, {
           mem_eficiencia: payload.mem_eficiencia,
           bj_winrate: payload.bj_winrate,
           coins: payload.coins
         });
 
-        const cluster = respuestaIA.data.perfil_jugador;
+        const cluster = respuestaIA.data.perfil_ia;
         
         // Mapeo de perfiles
         const perfiles = {

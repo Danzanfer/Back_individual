@@ -52,7 +52,8 @@ services:
       - DB_PASS=${DB_PASS}
       - DB_NAME=${DB_NAME}
       - DB_PORT=${DB_PORT}
-      - FLASK_URL=http://mi_casino_flask_container:5000 # Usa el nombre del contenedor
+      - FLASK_URL=http://mi_casino_flask:5000
+      #- FLASK_URL=http://mi_casino_flask_container:5000 # Usa el nombre del contenedor
     ports:
       - "${PORT}:${PORT}"
 
