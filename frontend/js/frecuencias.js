@@ -1,7 +1,3 @@
-// ── FRECUENCIAS AUDITIVAS ──
-// Barrido automático de 20Hz a 20000Hz
-// El tono sube solo — el jugador presiona cuando deja de escucharlo
-// 3 intentos máximo, resultado = mediana de los 3
 
 const FREQ_MIN  = 200;    // empezar en 200Hz (claramente audible)
 const FREQ_MAX  = 20000;

@@ -1,4 +1,3 @@
-// ── BART — timer global de 60s para los 5 globos ──
 
 const GLOBOS = [
   { color: '#50c878', label: 'Seguro',    min: 15, max: 25, premioBase: 2 },

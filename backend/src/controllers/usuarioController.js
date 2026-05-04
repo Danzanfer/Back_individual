@@ -12,10 +12,8 @@ export const registrarDatosJugador = async (req, res) => {
       });
     }
 
-    // Mapeo y guarder en postgres del service
     const resultado = await usuarioService.procesarYGuardarVector(datos);
 
-    // Respuesta exitosa
     return res.status(201).json({
       mensaje: "Análisis de comportamiento guardado",
       id_proceso: resultado.id,

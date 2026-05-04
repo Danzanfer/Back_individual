@@ -22,5 +22,4 @@ const Prediccion = db.define('Prediccion', {
   freezeTableName: true
 });
 
-// IMPORTANTE: NO pongas belongsTo aquí.
 export default Prediccion;

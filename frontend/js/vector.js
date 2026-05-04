@@ -1,8 +1,6 @@
-// ── VECTOR DE DATOS DEL JUGADOR (Estructura Refactorizada) ──
 
 const Vector = {
 
-  // Construye el vector completo desde localStorage con las nuevas features
   construir() {
     try {
       const jugador  = storageGet('jugador_actual', {});
@@ -14,34 +12,29 @@ const Vector = {
       if (!jugador.id) throw new ValidationError('No hay jugador activo', 'jugador_id');
 
       const vector = {
-        // identificación
+        
         jugador_id:   jugador.id,
         username:     jugador.username,
         timestamp:    new Date().toISOString(),
 
-        // blackjack (Features de riesgo financiero)
         bj_partidas:      bjStats.partidas || 0,
         bj_ganadas:       bjStats.ganadas  || 0,
         bj_total_perdido: bjStats.totalPerdido || 0, // Nueva feature
         bj_total_apuesta: bjStats.totalApostado || 0, // Para calcular ratio después
         bj_racha_max:     bjStats.rachaMax || 0,
 
-        // BART (Propensión al riesgo)
         bart_score:   datos['BART: score ajustado']    || null,
         bart_pumps:   datos['BART: promedio bombeos']  || null, // Nueva feature
         bart_neto:    datos['BART: resultado neto']    || null,
 
-        // memoria (Perfil cognitivo)
         mem_pares:      datos['Memoria: pares encontrados'] || null,
         mem_errores:    datos['Memoria: errores']        || null,
         mem_eficiencia: datos['Memoria: eficiencia']     || null, // Se guarda como "85%"
         mem_tiempo:     datos['Memoria: tiempo usado']   || null,
 
-        // frecuencias (Edad auditiva)
         freq_hz:      datos['Frecuencias: frecuencia mediana'] || null,
         freq_edad:    datos['Frecuencias: edad estimada (mediana)'] || null,
 
-        // economía y tienda (NUEVAS FEATURES)
         shop_total_gastado: tienda.totalGastado || 0,
         shop_items_comprados: tienda.itemsComprados || 0,
         coins_actuales:     coins,
@@ -56,7 +49,6 @@ const Vector = {
     }
   },
 
-  // Guarda en el localStorage (Tu estrategia original)
   guardar() {
     try {
       const vector  = this.construir();
@@ -78,7 +70,6 @@ const Vector = {
     }
   },
 
-  // Etiquetas para la tabla (Actualizado con las nuevas features)
   COLUMNAS: [
     { key: 'username',      label: 'Usuario' },
     { key: 'bj_partidas',   label: 'BJ Partidas' },

@@ -7,7 +7,8 @@ const Usuario = db.define('Usuario', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
-  username: { type: DataTypes.STRING, allowNull: false },
+  username: { type: DataTypes.STRING, allowNull: false, unique: true },
+  password: { type: DataTypes.STRING },
   bart_riesgo: { type: DataTypes.FLOAT },
   bart_explosiones: { type: DataTypes.INTEGER },
   mem_eficiencia: { type: DataTypes.INTEGER },
@@ -25,5 +26,5 @@ const Usuario = db.define('Usuario', {
   freezeTableName: true
 });
 
-// IMPORTANTE: NO pongas hasMany aquí.
+
 export default Usuario;

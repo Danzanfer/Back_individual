@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS usuarios (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255),
     bart_riesgo FLOAT DEFAULT 0,
     bart_explosiones INTEGER DEFAULT 0,
     mem_eficiencia INTEGER DEFAULT 0,
@@ -24,6 +25,17 @@ CREATE TABLE IF NOT EXISTS predicciones (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS transacciones_coins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    cantidad INTEGER NOT NULL,
+    tipo_transaccion VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255),
+    saldo_anterior INTEGER DEFAULT 0,
+    saldo_nuevo INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 INSERT INTO usuarios (username, bart_riesgo, bart_explosiones, mem_eficiencia, mem_velocidad, bj_winrate, coins, ciudad, clima) VALUES
 --BAJO RIESGO (Estrategas)
 ('player_pro_1', 25.4, 2, 95, 85.2, 0.75, 5000, 'Bilbao', '18°C'),
@@ -45,3 +57,26 @@ INSERT INTO usuarios (username, bart_riesgo, bart_explosiones, mem_eficiencia, m
 ('risky_gambler_3', 85.4, 14, 52, 195.8, 0.28, 300, 'Alicante', '29°C'),
 ('risky_gambler_4', 79.9, 12, 41, 220.1, 0.22, 100, 'Almeria', '31°C'),
 ('risky_gambler_5', 95.0, 20, 35, 280.4, 0.10, 20, 'Cadiz', '27°C');
+
+-- Insertar transacciones de ejemplo
+INSERT INTO transacciones_coins (usuario_id, cantidad, tipo_transaccion, descripcion, saldo_anterior, saldo_nuevo) 
+SELECT 
+    u.id,
+    CASE 
+        WHEN u.username LIKE '%pro%' THEN 500
+        WHEN u.username LIKE '%casual%' THEN 100
+        ELSE -50
+    END as cantidad,
+    CASE 
+        WHEN u.username LIKE '%pro%' THEN 'ganancia'
+        WHEN u.username LIKE '%casual%' THEN 'compra'
+        ELSE 'pérdida'
+    END as tipo_transaccion,
+    'Transacción automática',
+    CASE 
+        WHEN u.username LIKE '%pro%' THEN u.coins - 500
+        WHEN u.username LIKE '%casual%' THEN u.coins - 100
+        ELSE u.coins + 50
+    END as saldo_anterior,
+    u.coins as saldo_nuevo
+FROM usuarios u;

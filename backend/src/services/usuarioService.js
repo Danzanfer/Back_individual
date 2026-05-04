@@ -17,11 +17,11 @@ class UsuarioService {
         clima: datosRaw.weather_cache?.temp || null
       };
 
-      // Crear el usuario
+      
       const registroUsuario = await Usuario.create(payload);
 
       try {
-        // Llamada al modelo
+        
         const respuestaIA = await axios.post(`${process.env.FLASK_URL}/predict`, {
           mem_eficiencia: payload.mem_eficiencia,
           bj_winrate: payload.bj_winrate,
@@ -30,7 +30,7 @@ class UsuarioService {
 
         const cluster = respuestaIA.data.perfil_ia;
         
-        // Mapeo de perfiles
+        
         const perfiles = {
           0: "Conservador / Bajo Riesgo",
           1: "Moderado / Estratégico",
@@ -38,20 +38,20 @@ class UsuarioService {
         };
         const perfilTexto = perfiles[cluster] || `Cluster ${cluster}`;
 
-        // ACTUALIZAR la tabla 'usuarios'
+        
         await registroUsuario.update({
           perfil_psicologico: perfilTexto,
           probabilidad_fuga: 0.15 // Aquí podrías poner un valor real si tu IA lo da
         });
 
-        // INSERTAR en la tabla 'prediccions'
+        
         await Prediccion.create({
           perfil_ia: cluster.toString(),
           probabilidad: 0.85, // Ejemplo
           usuario_id: registroUsuario.id
         });
 
-        // Devolver el perfil para la respuesta del API
+        
         registroUsuario.setDataValue('perfil_ia', cluster);
 
       } catch (errorIA) {
