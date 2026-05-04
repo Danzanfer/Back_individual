@@ -222,15 +222,27 @@ function memoriaGanar() {
   `;
 }
 
+// ╔════════════════════════════════════════════════════════════════╗
+// ║ ✅ ARREGLO 2: Guardar eficiencia incluso si pierdes            ║
+// ║ - Calcula porcentaje de pares encontrados vs intentos          ║
+// ║ - Garantiza que mem_eficiencia siempre tenga un valor          ║
+// ╚════════════════════════════════════════════════════════════════╝
 function memoriaPerder(motivo) {
   const multa = 15;
   Coins.restar(multa);
   Coins.init();
   const d = JSON.parse(localStorage.getItem('datos_conductuales') || '{}');
+  
   guardarDato('Memoria: resultado',        `fallido (${motivo})`);
   guardarDato('Memoria: errores',          memBarajadas);
   guardarDato('Memoria: intentos',         memIntentos);
   guardarDato('Memoria: partidas fallidas', (parseInt(d['Memoria: partidas fallidas']||0)+1));
+  
+  // ✨ NUEVA LÍNEA: Calcular y guardar eficiencia incluso si pierdes
+  const eficiencia = memIntentos > 0 
+    ? Math.round((memEncontrados / memIntentos) * 100)
+    : 0;
+  guardarDato('Memoria: eficiencia', `${eficiencia}%`);
 
   if (typeof window.marcarMinijuegoJugado === 'function') {
     window.marcarMinijuegoJugado('memoria');

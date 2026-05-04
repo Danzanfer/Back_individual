@@ -4,15 +4,27 @@ const API_URL = "http://127.0.0.1:3000/api";
 // Variable de control para evitar bucles infinitos y saturación del servidor
 let estaSincronizandoIA = false;
 
+function getAuthToken() {
+  try {
+    const jugador = JSON.parse(localStorage.getItem('jugador_actual') || '{}');
+    return jugador.token || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 const casinoApi = {
     async enviarPerfil(datos) {
         try {
+            const token = getAuthToken();
             console.log("📡 Enviando datos al servidor:", `${API_URL}/predicciones`);
+            console.log("📦 Payload:", datos);  // Debug
             
             const response = await fetch(`${API_URL}/predicciones`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
                 },
                 body: JSON.stringify(datos)
             });
@@ -52,7 +64,7 @@ const AdaptadorUI = {
         const contenedorChips = document.querySelector('.apuesta-chips');
         if (!contenedorChips) return;
 
-        // Limpiar y renderizar nuevas fichas adaptadas por la IA[cite: 5]
+        // Limpiar y renderizar nuevas fichas adaptadas por la IA
         contenedorChips.innerHTML = '';
         listaChips.forEach((valor, index) => {
             const btn = document.createElement('button');
@@ -81,15 +93,22 @@ const normalizarNumero = (valor, fallback) => {
     return Number.isFinite(numero) ? numero : fallback;
 };
 
+// ╔════════════════════════════════════════════════════════════════╗
+// ║ ✅ Validación del vector                                       ║
+// ╚════════════════════════════════════════════════════════════════╝
 const vectorCompleto = (vector) => {
     if (!vector) return false;
-    const tieneBJ = typeof vector.bj_partidas === 'number' && vector.bj_partidas > 0;
-    const tieneBART = vector.bart_score !== null && vector.bart_score !== undefined && vector.bart_score !== '';
-    const tieneMemoria = vector.mem_eficiencia !== null && vector.mem_eficiencia !== undefined && vector.mem_eficiencia !== '';
-    const tieneFrecuencia = vector.freq_hz !== null && vector.freq_hz !== undefined && vector.freq_hz !== '';
+    
+    const tieneBJ = typeof vector.bj_partidas === 'number'; 
+    const tieneBART = vector.bart_score !== null && 
+                      vector.bart_score !== undefined && 
+                      vector.bart_score !== '';
+    const tieneMemoria = vector.mem_eficiencia !== null && 
+                         vector.mem_eficiencia !== undefined && 
+                         vector.mem_eficiencia !== '';
     const tieneCoins = typeof vector.coins_actuales === 'number';
 
-    return tieneBJ && tieneBART && tieneMemoria && tieneFrecuencia && tieneCoins;
+    return tieneBJ && tieneBART && tieneMemoria && tieneCoins;
 };
 
 async function sincronizarPerfilIA() {
@@ -102,15 +121,49 @@ async function sincronizarPerfilIA() {
 
     const vectorDatos = Vector.construir();
     if (!vectorCompleto(vectorDatos)) {
-        console.log("🔎 Vector incompleto: la IA esperará hasta tener datos de blackjack y minijuegos.");
+        console.log("🔎 Vector incompleto: esperando Blackjack, BART y Memoria...");
+        console.log("Estado actual:", {
+            bj: vectorDatos.bj_partidas,
+            bart: vectorDatos.bart_score,
+            mem: vectorDatos.mem_eficiencia,
+            coins: vectorDatos.coins_actuales
+        });
         return;
     }
 
+    // ╔════════════════════════════════════════════════════════════════╗
+    // ║ ✅ ARREGLO: Payload correcto para el servidor                  ║
+    // ║ - Incluye jugador_actual.username (requerido)                  ║
+    // ║ - Incluye datos_conductuales completo                          ║
+    // ║ - Incluye bj_stats completo                                    ║
+    // ║ - El servidor pasa esto a la IA Flask                          ║
+    // ╚════════════════════════════════════════════════════════════════╝
     const payload = {
-        usuario_id: vectorDatos.jugador_id,
-        bart_riesgo: normalizarNumero(vectorDatos.bart_score, 0.5),
-        mem_eficiencia: normalizarNumero(vectorDatos.mem_eficiencia, 50),
-        bj_winrate: vectorDatos.bj_partidas > 0 ? (vectorDatos.bj_ganadas / vectorDatos.bj_partidas) : 0.5,
+        // ✅ Datos del jugador (requerido por prediccionController.js)
+        jugador_actual: {
+            id: vectorDatos.jugador_id,
+            username: vectorDatos.username  // ← NUEVA LÍNEA: Requerido por el servidor
+        },
+        
+        // ✅ Datos conductuales (para que el servidor los reenvíe a la IA)
+        datos_conductuales: {
+            bart_riesgo: normalizarNumero(vectorDatos.bart_score, 0.5),
+            mem_eficiencia: normalizarNumero(vectorDatos.mem_eficiencia, 50),
+            coins: normalizarNumero(vectorDatos.coins_actuales, 0)
+        },
+        
+        // ✅ Stats de blackjack (para que el servidor los reenvíe a la IA)
+        bj_stats: {
+            bj_partidas: vectorDatos.bj_partidas,
+            bj_ganadas: vectorDatos.bj_ganadas || 0,
+            bj_total_perdido: vectorDatos.bj_total_perdido || 0,
+            bj_total_apostado: vectorDatos.bj_total_apuesta || 0,
+            bj_winrate: vectorDatos.bj_partidas > 0 
+                ? (vectorDatos.bj_ganadas / vectorDatos.bj_partidas) 
+                : 0.5
+        },
+        
+        // ✅ Coins actuales
         coins: normalizarNumero(vectorDatos.coins_actuales, 0)
     };
 
@@ -121,6 +174,7 @@ async function sincronizarPerfilIA() {
         const respuesta = await casinoApi.enviarPerfil(payload);
         if (respuesta) {
             console.log("✅ Respuesta de IA recibida correctamente.");
+            console.log("Perfil detectado:", respuesta.perfil);
             AdaptadorUI.aplicarConfiguracion(respuesta);
         }
     } catch (error) {

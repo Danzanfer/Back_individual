@@ -123,45 +123,60 @@
 <script src="js/blackjack.js"></script>
 
 <script>
+  (function() {
+    var raw = localStorage.getItem('jugador_actual');
+    var jugador = raw ? JSON.parse(raw) : null;
+    // Si no es válido, redirigimos ANTES de que cargue el resto de la página
+    if (!jugador || !jugador.id || !jugador.token) {
+      window.location.replace('login.html');
+    }
+  })();
+</script>
+
+<script>
   (async function init() {
     try {
-      // 1. Obtener datos del jugador
-      var raw = localStorage.getItem('jugador_actual');
-      var jugador = raw ? JSON.parse(raw) : null;
-      
-      if (jugador && jugador.username) {
+      // Aquí ya sabemos que existe el jugador gracias al "Guardia" de arriba
+      var jugador = JSON.parse(localStorage.getItem('jugador_actual'));
+
+      // 2. Mostrar usuario
+      if (jugador.username) {
         document.getElementById('nav-usuario').textContent = jugador.username;
-      } else {
-        window.location.replace('login.html');
-        return;
       }
 
-      // 2. Evento Logout
+      // 3. Actualizar coins
+      if (jugador.coins !== undefined) {
+        document.querySelector('[data-wallet]').textContent = jugador.coins;
+      }
+
+      // 4. Evento Logout
       const logoutBtn = document.getElementById('nav-logout');
       if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
+        logoutBtn.onclick = function(e) { // Simplificado
           e.preventDefault();
           localStorage.removeItem('jugador_actual');
           window.location.replace('login.html');
-        });
+        };
       }
 
-      // 3. Inicializar Motor de Juego
+      // 5. Inicializar Motor de Juego
       if (typeof bjInit === 'function') {
         bjInit(); 
         console.log("✅ Motor de Blackjack activado");
       }
 
-      // 4. Clima Opcional
+      // 6. Clima
       if (typeof Weather !== 'undefined' && typeof Weather.obtener === 'function') {
         Weather.obtener().catch(e => console.error("Error weather:", e));
       }
 
     } catch (err) {
       console.error("❌ Error durante el inicio:", err);
+      // No limpiamos el storage aquí para evitar bucles si es un error de UI
     }
   })();
-
+  
 </script>
+
 </body>
 </html>

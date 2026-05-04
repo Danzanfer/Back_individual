@@ -1,13 +1,29 @@
+// ╔════════════════════════════════════════════════════════════════╗
+// ║ ✅ ARREGLO 3: Validación sincronizada con api.js               ║
+// ║ - Usar la MISMA lógica en ambos archivos                       ║
+// ║ - Sin validar Frecuencias (es opcional)                        ║
+// ╚════════════════════════════════════════════════════════════════╝
 const casino_datos = {
   _vectorCompleto(vector) {
     if (!vector) return false;
-    const tieneBJ = typeof vector.bj_partidas === 'number' && vector.bj_partidas > 0;
-    const tieneBART = vector.bart_score !== null && vector.bart_score !== undefined && vector.bart_score !== '';
-    const tieneMemoria = vector.mem_eficiencia !== null && vector.mem_eficiencia !== undefined && vector.mem_eficiencia !== '';
-    const tieneFrecuencia = vector.freq_hz !== null && vector.freq_hz !== undefined && vector.freq_hz !== '';
+    
+    // ✅ Sincronizado con api.js
+    const tieneBJ = typeof vector.bj_partidas === 'number';
+    
+    const tieneBART = vector.bart_score !== null && 
+                      vector.bart_score !== undefined && 
+                      vector.bart_score !== '';
+    
+    const tieneMemoria = vector.mem_eficiencia !== null && 
+                         vector.mem_eficiencia !== undefined && 
+                         vector.mem_eficiencia !== '';
+    
+    // ℹ️ Frecuencias es OPCIONAL
+    // const tieneFrecuencia = vector.freq_hz !== null && vector.freq_hz !== undefined && vector.freq_hz !== '';
+    
     const tieneCoins = typeof vector.coins_actuales === 'number';
 
-    return tieneBJ && tieneBART && tieneMemoria && tieneFrecuencia && tieneCoins;
+    return tieneBJ && tieneBART && tieneMemoria && tieneCoins;
   },
 
   _chequearSincronizarIA() {

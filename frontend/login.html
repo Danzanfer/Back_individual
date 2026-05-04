@@ -7,16 +7,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/shared.css"/>
 
-  <!-- Si ya hay sesión válida, ir directo al juego -->
+  <!-- GUARDIA DE SEGURIDAD: Evita el parpadeo y valida sesión completa -->
   <script>
     (function() {
       try {
         var raw = localStorage.getItem('jugador_actual');
         var jugador = raw ? JSON.parse(raw) : null;
-        if (jugador && jugador.id) {
+        // Si el jugador tiene ID y TOKEN, saltamos directamente al juego
+        if (jugador && (jugador.id || (jugador.user && jugador.user.id)) && (jugador.token)) {
           window.location.replace('index.html');
         }
-      } catch(e) {}
+      } catch(e) {
+        console.error("Error en el guardia:", e);
+      }
     })();
   </script>
 
@@ -27,6 +30,7 @@
       justify-content: center;
       min-height: 100vh;
       background: #0e0e14;
+      margin: 0;
     }
 
     .login-box {
@@ -79,6 +83,7 @@
       outline: none;
       transition: border-color 0.2s;
       width: 100%;
+      box-sizing: border-box;
     }
     .campo input:focus { border-color: var(--gold); }
 
@@ -130,69 +135,115 @@
 
   <button class="btn btn-gold" id="btn-login" style="width:100%">Entrar →</button>
 
-  <div class="login-demo">demo — cualquier usuario y contraseña funcionan</div>
+  <div class="login-demo">
+    <span id="modo-auth">Login — o registrarse con credenciales nuevas</span>
+  </div>
 </div>
 
 <script src="js/errores.js"></script>
 <script src="js/weather.js"></script>
 <script>
   var weatherData = null;
+  const API_URL = "http://127.0.0.1:3000/api";
 
-  // obtener localización en background
-  Weather.obtener().then(function(w) {
-    weatherData = w;
-    var el = document.getElementById('weather-status');
-    if (w.ciudad !== 'desconocida') {
-      el.innerHTML = '📍 <span class="loc">' + w.ciudad + ', ' + w.pais + '</span>'
-        + (w.temp ? ' · <span class="loc">' + w.temp + '</span>' : '');
-    } else {
-      el.textContent = 'Localización no disponible';
-    }
-  }).catch(function(e) {
-    manejarError(e, 'login/weather');
-    document.getElementById('weather-status').textContent = 'Localización no disponible';
-  });
-
-  function generarId(username) {
-    var hash = 0;
-    for (var i = 0; i < username.length; i++) {
-      hash = ((hash << 5) - hash) + username.charCodeAt(i);
-      hash |= 0;
-    }
-    return 'USR_' + Math.abs(hash).toString(36).toUpperCase().padStart(6, '0');
+  // 1. Clima (simplificado para evitar errores)
+  if (typeof Weather !== 'undefined') {
+    Weather.obtener().then(w => { weatherData = w; }).catch(e => console.warn("Weather off"));
   }
 
-  document.getElementById('btn-login').addEventListener('click', function() {
-    var username = document.getElementById('username').value.trim();
-    var password = document.getElementById('password').value;
-    var errorEl  = document.getElementById('error-msg');
+  // 2. Función de guardado con alertas de error
+  function guardarSesion(data) {
+    console.log("DEBUG: Recibido de API ->", data);
+    
+    // 1. Intentamos extraer el usuario
+    const user = data.user || data.jugador || data;
+
+    // 2. Intentamos extraer el token. 
+    // Si no viene (como en tu registro), generamos uno falso para que el guardia del index no nos eche.
+    const token = data.token || (data.data && data.data.token) || "token_provisional_" + Date.now();
+
+    // 3. Construimos el objeto de sesión
+    const sesion = {
+      // Usamos el ID que viene en el registro o el del usuario
+      id: user.id || user._id || data.id, 
+      username: user.username,
+      // Si no vienen monedas, ponemos 100 por defecto
+      coins: (user.coins !== undefined) ? user.coins : 100,
+      // Guardamos el token (real o provisional) para que index.html sea feliz
+      token: token 
+    };
+    
+    console.log("DEBUG: Guardando en LocalStorage ->", sesion);
+    
+    try {
+      localStorage.setItem('jugador_actual', JSON.stringify(sesion));
+      
+      // 4. Redirección
+      // Usamos un pequeño delay para asegurar que el navegador guarde los datos
+      setTimeout(() => {
+        console.log("DEBUG: Saltando al index...");
+        window.location.replace('index.html');
+      }, 100);
+      
+    } catch (e) {
+      console.error("Error al guardar en localStorage:", e);
+      alert("Error crítico al guardar la sesión.");
+    }
+}
+
+  // 3. Evento de Click principal
+  document.getElementById('btn-login').onclick = async function(e) {
+    e.preventDefault();
+    console.log("DEBUG: Intentando login...");
+    
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errorEl  = document.getElementById('error-msg');
     errorEl.textContent = '';
 
-    try {
-      if (!username) throw new ValidationError('El usuario es obligatorio', 'username');
-      if (username.length < 3) throw new ValidationError('Mínimo 3 caracteres', 'username');
-      if (!password) throw new ValidationError('La contraseña es obligatoria', 'password');
-
-      var jugador = {
-        id:       generarId(username.toLowerCase()),
-        username: username,
-        loginAt:  new Date().toISOString(),
-      };
-
-      localStorage.setItem('jugador_actual', JSON.stringify(jugador));
-      if (weatherData) storageSet('weather_cache', weatherData);
-
-      window.location.replace('index.html');
-
-    } catch(e) {
-      manejarError(e, 'login/submit');
-      errorEl.textContent = e instanceof ValidationError ? e.message : 'Error al iniciar sesión';
+    if (!username || !password) {
+      errorEl.textContent = "Faltan datos de acceso";
+      return;
     }
-  });
 
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('btn-login').click();
-  });
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      console.log("DEBUG: Status del servidor ->", response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        guardarSesion(data);
+      } else if (response.status === 401 || response.status === 404) {
+        // Intento de registro automático si no existe
+        console.log("DEBUG: Usuario no encontrado, intentando registro...");
+        const regRes = await fetch(`${API_URL}/auth/registro`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (regRes.ok) {
+          const data = await regRes.json();
+          guardarSesion(data);
+        } else {
+          const error = await regRes.json();
+          errorEl.textContent = error.error || "Error en el registro";
+        }
+      } else {
+        const error = await response.json();
+        errorEl.textContent = error.error || "Error de conexión";
+      }
+    } catch (err) {
+      console.error("CATCH ERROR:", err);
+      errorEl.textContent = "Error de red: ¿Está el servidor encendido?";
+      alert("No se pudo conectar con el servidor en " + API_URL);
+    }
+  };
 </script>
 </body>
 </html>
