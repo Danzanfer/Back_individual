@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/shared.css"/>
 
-  <!-- GUARDIA DE SEGURIDAD: Evita el parpadeo y valida sesión completa -->
   <script>
     (function() {
       try {
@@ -146,30 +145,21 @@
   var weatherData = null;
   const API_URL = "http://127.0.0.1:3000/api";
 
-  // 1. Clima (simplificado para evitar errores)
   if (typeof Weather !== 'undefined') {
     Weather.obtener().then(w => { weatherData = w; }).catch(e => console.warn("Weather off"));
   }
 
-  // 2. Función de guardado con alertas de error
   function guardarSesion(data) {
     console.log("DEBUG: Recibido de API ->", data);
     
-    // 1. Intentamos extraer el usuario
     const user = data.user || data.jugador || data;
 
-    // 2. Intentamos extraer el token. 
-    // Si no viene (como en tu registro), generamos uno falso para que el guardia del index no nos eche.
     const token = data.token || (data.data && data.data.token) || "token_provisional_" + Date.now();
 
-    // 3. Construimos el objeto de sesión
     const sesion = {
-      // Usamos el ID que viene en el registro o el del usuario
       id: user.id || user._id || data.id, 
       username: user.username,
-      // Si no vienen monedas, ponemos 100 por defecto
       coins: (user.coins !== undefined) ? user.coins : 100,
-      // Guardamos el token (real o provisional) para que index.html sea feliz
       token: token 
     };
     
@@ -178,8 +168,6 @@
     try {
       localStorage.setItem('jugador_actual', JSON.stringify(sesion));
       
-      // 4. Redirección
-      // Usamos un pequeño delay para asegurar que el navegador guarde los datos
       setTimeout(() => {
         console.log("DEBUG: Saltando al index...");
         window.location.replace('index.html');
@@ -191,7 +179,6 @@
     }
 }
 
-  // 3. Evento de Click principal
   document.getElementById('btn-login').onclick = async function(e) {
     e.preventDefault();
     console.log("DEBUG: Intentando login...");
@@ -219,7 +206,6 @@
         const data = await response.json();
         guardarSesion(data);
       } else if (response.status === 401 || response.status === 404) {
-        // Intento de registro automático si no existe
         console.log("DEBUG: Usuario no encontrado, intentando registro...");
         const regRes = await fetch(`${API_URL}/auth/registro`, {
           method: 'POST',

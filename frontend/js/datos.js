@@ -1,8 +1,4 @@
-// ╔════════════════════════════════════════════════════════════════╗
-// ║ ✅ ARREGLO 3: Validación sincronizada con api.js               ║
-// ║ - Usar la MISMA lógica en ambos archivos                       ║
-// ║ - Sin validar Frecuencias (es opcional)                        ║
-// ╚════════════════════════════════════════════════════════════════╝
+
 const casino_datos = {
   _vectorCompleto(vector) {
     if (!vector) return false;
@@ -18,9 +14,7 @@ const casino_datos = {
                          vector.mem_eficiencia !== undefined && 
                          vector.mem_eficiencia !== '';
     
-    // ℹ️ Frecuencias es OPCIONAL
-    // const tieneFrecuencia = vector.freq_hz !== null && vector.freq_hz !== undefined && vector.freq_hz !== '';
-    
+   
     const tieneCoins = typeof vector.coins_actuales === 'number';
 
     return tieneBJ && tieneBART && tieneMemoria && tieneCoins;

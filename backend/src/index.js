@@ -12,7 +12,6 @@ app.use(cors());
 
 app.use(express.json());
 
-// Definición de relaciones centralizada para evitar errores de inicialización
 Usuario.hasMany(Prediccion, { 
   foreignKey: 'usuario_id', 
   as: 'predicciones' 

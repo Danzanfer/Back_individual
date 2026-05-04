@@ -1,7 +1,5 @@
-// Constante global - Usamos 127.0.0.1 para evitar problemas de resolución en entornos locales
 const API_URL = "http://127.0.0.1:3000/api";
 
-// Variable de control para evitar bucles infinitos y saturación del servidor
 let estaSincronizandoIA = false;
 
 function getAuthToken() {
@@ -29,7 +27,6 @@ const casinoApi = {
                 body: JSON.stringify(datos)
             });
 
-            // Si el servidor responde con error (como el 500 que veías)
             if (!response.ok) {
                 const errorTexto = await response.text();
                 console.error(`❌ Error del servidor (${response.status}):`, errorTexto);
@@ -49,7 +46,6 @@ const AdaptadorUI = {
     aplicarConfiguracion(config) {
         if (!config) return;
         
-        // Extraemos los datos buscando en las posibles estructuras de respuesta
         const datosIA = config.configuracion_juego || 
                         (config.data && config.data.configuracion_juego) || 
                         config;
@@ -64,7 +60,6 @@ const AdaptadorUI = {
         const contenedorChips = document.querySelector('.apuesta-chips');
         if (!contenedorChips) return;
 
-        // Limpiar y renderizar nuevas fichas adaptadas por la IA
         contenedorChips.innerHTML = '';
         listaChips.forEach((valor, index) => {
             const btn = document.createElement('button');
@@ -93,9 +88,7 @@ const normalizarNumero = (valor, fallback) => {
     return Number.isFinite(numero) ? numero : fallback;
 };
 
-// ╔════════════════════════════════════════════════════════════════╗
-// ║ ✅ Validación del vector                                       ║
-// ╚════════════════════════════════════════════════════════════════╝
+
 const vectorCompleto = (vector) => {
     if (!vector) return false;
     
@@ -131,28 +124,19 @@ async function sincronizarPerfilIA() {
         return;
     }
 
-    // ╔════════════════════════════════════════════════════════════════╗
-    // ║ ✅ ARREGLO: Payload correcto para el servidor                  ║
-    // ║ - Incluye jugador_actual.username (requerido)                  ║
-    // ║ - Incluye datos_conductuales completo                          ║
-    // ║ - Incluye bj_stats completo                                    ║
-    // ║ - El servidor pasa esto a la IA Flask                          ║
-    // ╚════════════════════════════════════════════════════════════════╝
+    
     const payload = {
-        // ✅ Datos del jugador (requerido por prediccionController.js)
         jugador_actual: {
             id: vectorDatos.jugador_id,
             username: vectorDatos.username  // ← NUEVA LÍNEA: Requerido por el servidor
         },
         
-        // ✅ Datos conductuales (para que el servidor los reenvíe a la IA)
         datos_conductuales: {
             bart_riesgo: normalizarNumero(vectorDatos.bart_score, 0.5),
             mem_eficiencia: normalizarNumero(vectorDatos.mem_eficiencia, 50),
             coins: normalizarNumero(vectorDatos.coins_actuales, 0)
         },
         
-        // ✅ Stats de blackjack (para que el servidor los reenvíe a la IA)
         bj_stats: {
             bj_partidas: vectorDatos.bj_partidas,
             bj_ganadas: vectorDatos.bj_ganadas || 0,
@@ -163,7 +147,6 @@ async function sincronizarPerfilIA() {
                 : 0.5
         },
         
-        // ✅ Coins actuales
         coins: normalizarNumero(vectorDatos.coins_actuales, 0)
     };
 
@@ -186,7 +169,6 @@ async function sincronizarPerfilIA() {
     }
 }
 
-// Exportar funciones al objeto window
 window.casinoApi = casinoApi;
 window.AdaptadorUI = AdaptadorUI;
 window.sincronizarPerfilIA = sincronizarPerfilIA;

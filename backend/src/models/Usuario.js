@@ -26,5 +26,5 @@ const Usuario = db.define('Usuario', {
   freezeTableName: true
 });
 
-// IMPORTANTE: NO pongas hasMany aquí.
+
 export default Usuario;

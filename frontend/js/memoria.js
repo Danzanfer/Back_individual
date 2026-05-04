@@ -1,9 +1,3 @@
-// ── MEMORIA DE PARES ──
-// Reglas:
-// - Las posiciones de las cartas se fijan al inicio y NUNCA cambian
-// - Al fallar un par, las cartas se voltean boca abajo pero NO cambian de posición
-// - 3 barajadas máximo (=errores), a la 4ª se pierde
-// - Timer de 60s para toda la partida
 
 const EMOJIS_MEM = ['🌟','🎯','🍀','🔥','💎','🌙','⚡','🎲'];
 const MAX_BARAJADAS = 3;
@@ -28,7 +22,6 @@ function memoriaInit() {
     const j = Math.floor(Math.random()*(i+1));
     [pares[i],pares[j]] = [pares[j],pares[i]];
   }
-  // cada carta tiene: posición fija (idx), emoji fijo, estado visible/encontrada
   memCartas     = pares.map((e, i) => ({ pos: i, emoji: e, encontrada: false, visible: false }));
   memVolteadas  = [];
   memEncontrados = 0;
@@ -38,7 +31,6 @@ function memoriaInit() {
   memTiempo     = TIEMPO_MEM;
   memoriaLimpiar();
 
-  // FASE 1: mostrar todas las cartas 5 segundos
   memoriaRevelar();
 }
 
@@ -222,11 +214,7 @@ function memoriaGanar() {
   `;
 }
 
-// ╔════════════════════════════════════════════════════════════════╗
-// ║ ✅ ARREGLO 2: Guardar eficiencia incluso si pierdes            ║
-// ║ - Calcula porcentaje de pares encontrados vs intentos          ║
-// ║ - Garantiza que mem_eficiencia siempre tenga un valor          ║
-// ╚════════════════════════════════════════════════════════════════╝
+
 function memoriaPerder(motivo) {
   const multa = 15;
   Coins.restar(multa);
@@ -238,7 +226,6 @@ function memoriaPerder(motivo) {
   guardarDato('Memoria: intentos',         memIntentos);
   guardarDato('Memoria: partidas fallidas', (parseInt(d['Memoria: partidas fallidas']||0)+1));
   
-  // ✨ NUEVA LÍNEA: Calcular y guardar eficiencia incluso si pierdes
   const eficiencia = memIntentos > 0 
     ? Math.round((memEncontrados / memIntentos) * 100)
     : 0;

@@ -1,7 +1,6 @@
 import Usuario from '../models/Usuario.js';
 import crypto from 'crypto';
 
-// Hash simple sin dependencias externas - usa MD5 (no es seguro en producción, pero es lo más básico)
 function hashPassword(password) {
   return crypto.createHash('md5').update(password).digest('hex');
 }
