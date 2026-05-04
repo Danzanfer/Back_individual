@@ -10,7 +10,7 @@ const db = new Sequelize(
 	{
 		host: process.env.DB_HOST,
 		dialect: 'postgres',
-		logging: false,
+		logging: console.log,
 	
 		pool: {
     		max: 5,       

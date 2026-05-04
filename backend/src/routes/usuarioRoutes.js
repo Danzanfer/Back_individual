@@ -1,11 +1,9 @@
 import { Router } from 'express';
-import { registrarDatosJugador } from '../controllers/usuarioController.js';
+import { generarPrediccionJugador } from '../controllers/prediccionController.js'; 
 
 const router = Router();
 
-
-router.post('/perfil', registrarDatosJugador);
-
+router.post('/perfil', generarPrediccionJugador);
 
 router.get('/', (req, res) => {
     res.json({ 

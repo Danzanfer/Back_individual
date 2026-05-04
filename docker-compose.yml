@@ -1,38 +1,44 @@
 services:
+  # Administración visual
   pgadmin:
     image: dpage/pgadmin4
     container_name: mi_casino_pgadmin
     environment:
+      # He sincronizado esto para que uses las credenciales de tu .env o fijas
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "8080:80"
     depends_on:
       - db
+
+  # Base de Datos PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: mi_casino_db_container
     environment:
-      - POSTGRES_USER=admin_casino
-      - POSTGRES_PASSWORD=casino_pass_2026
-      - POSTGRES_DB=mi_casino_db
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - mi_casino_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
 
+  # Modelo de IA (Flask)
   mi_casino_flask:
     build: ./python_model
     container_name: mi_casino_flask_container
-    # IMPORTANTE: Mapear la carpeta para que vea los .pkl
     volumes:
       - ./python_model:/app
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=postgresql://admin_casino:casino_pass_2026@db:5432/mi_casino_db
+      # Construcción dinámica de la URL de conexión
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
+  # Backend (Node.js)
   mi_casino_node:
     build: ./backend
     container_name: mi_casino_node_container
@@ -40,10 +46,15 @@ services:
       - db
       - mi_casino_flask
     environment:
-      - DB_HOST=db
-      - FLASK_URL=http://mi_casino_flask:5000
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - FLASK_URL=http://mi_casino_flask_container:5000 # Usa el nombre del contenedor
     ports:
-      - "3000:3000"
+      - "${PORT}:${PORT}"
 
 volumes:
   mi_casino_data:

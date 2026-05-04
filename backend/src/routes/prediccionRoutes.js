@@ -1,7 +1,9 @@
-import express from 'express';
-const router = express.Router();
-import { generarPrediccionJugador } from '../controllers/prediccionController.js';
+import { Router } from 'express';
+import { postPrediccion } from '../controllers/prediccionController.js';
 
-router.post('', generarPrediccionJugador);
+const router = Router();
+
+// Configuramos la ruta POST
+router.post('/', postPrediccion); 
 
 export default router;

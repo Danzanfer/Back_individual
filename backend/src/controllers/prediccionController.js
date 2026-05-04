@@ -1,55 +1,53 @@
-import Prediccion from '../models/Prediccion.js';
 import axios from 'axios';
+import Prediccion from '../models/Prediccion.js';
+import Usuario from '../models/Usuario.js';
 
-export const generarPrediccionJugador = async (req, res) => {
-  try {
+export const postPrediccion = async (req, res) => {
     const { jugador_actual, datos_conductuales, bj_stats, coins } = req.body;
 
-    // 1. Mapeo de datos para Flask
-    const winrate = (bj_stats?.partidas > 0) ? (bj_stats.ganadas / bj_stats.partidas) : 0;
-    const datosParaFlask = {
-      bart_riesgo: datos_conductuales?.["BART: score ajustado"] || 0.5,
-      mem_eficiencia: datos_conductuales?.["Memoria: eficiencia"] || 80,
-      bj_winrate: winrate,
-      coins: coins || 35
-    };
-
-    console.log("📡 Intentando conectar con Flask en 127.0.0.1:5000...");
-
-    // 2. Llamada a la IA (Flask)
-    const respuestaFlask = await axios.post('http://127.0.0.1:5000/predict', datosParaFlask);
-    
-    const cluster = respuestaFlask.data.perfil_jugador;
-    const configuracionIA = respuestaFlask.data.configuracion_juego;
-    const nombrePerfil = { 0: 'Estratega', 1: 'Casual', 2: 'Agresivo' }[cluster] || 'Desconocido';
-
-    // 3. Guardado en DB con validación de UUID
     try {
-      const esUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(jugador_actual?.id);
-      
-      await Prediccion.create({
-        perfil_ia: nombrePerfil,
-        usuarioId: esUUID ? jugador_actual.id : null,
-        probabilidad: 1.0
-      });
-      console.log(`✅ Registro guardado: Perfil ${nombrePerfil}`);
-    } catch (dbError) {
-      console.log("⚠️ Registro en DB saltado (ID no es UUID o error de inserción)");
+        // 1. Asegurar que el usuario existe (lo busca o lo crea)
+        // Esto evita que la DB rechace la predicción por falta de usuario
+        const [usuario] = await Usuario.findOrCreate({
+            where: { id: jugador_actual.id },
+            defaults: { 
+                username: `jugador_${jugador_actual.id.slice(0, 5)}`,
+                coins: coins || 0
+            }
+        });
+
+        // 2. Llamada a la IA en Flask
+        const datosParaIA = {
+            ...datos_conductuales,
+            ...bj_stats,
+            coins
+        };
+
+        const respuestaIA = await axios.post('http://mi_casino_flask:5000/predict', datosParaIA);
+
+        // 3. Guardar la predicción vinculada al usuario
+        const nuevaPrediccion = await Prediccion.create({
+            perfil_ia: respuestaIA.data.perfil || 'Desconocido',
+            probabilidad: 1.0, // O el valor que devuelva tu IA
+            usuario_id: usuario.id 
+        });
+
+        console.log(`✅ Predicción guardada para el usuario: ${usuario.id}`);
+
+        // 4. Respuesta al cliente
+        res.json({
+            ok: true,
+            perfil: respuestaIA.data.perfil,
+            configuracion_juego: respuestaIA.data.configuracion_juego,
+            id_registro: nuevaPrediccion.id
+        });
+
+    } catch (error) {
+        console.error('❌ Error en el flujo de predicción:', error.message);
+        res.status(500).json({
+            ok: false,
+            msg: 'Error interno en el servidor o comunicación con IA',
+            error: error.message
+        });
     }
-
-    // 4. Respuesta al Frontend
-    return res.status(201).json({
-      ok: true,
-      perfil: nombrePerfil,
-      configuracion_juego: configuracionIA
-    });
-
-  } catch (error) {
-    console.error('❌ Error de conexión con Flask:', error.message);
-    return res.status(500).json({
-      ok: false,
-      msg: 'La IA no responde en el puerto 5000',
-      error: error.message
-    });
-  }
 };

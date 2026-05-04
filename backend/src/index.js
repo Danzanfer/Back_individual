@@ -1,44 +1,38 @@
 import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
 import db from './config/db.js';
-
-// IMPORTANTE: Importar modelos para que Sequelize los registre antes de sync
-import './models/Usuario.js';
-import './models/Prediccion.js';
-
-import usuarioRoutes from './routes/usuarioRoutes.js';
+import Usuario from './models/Usuario.js';
+import Prediccion from './models/Prediccion.js';
 import prediccionRoutes from './routes/prediccionRoutes.js';
 
-dotenv.config();
-
 const app = express();
-
-// Middlewares
-app.use(cors());
 app.use(express.json());
 
-// Rutas
-app.use('/api/jugador', usuarioRoutes);
+// CONFIGURACIÓN DE RELACIONES (Rompe la importación circular)
+Usuario.hasMany(Prediccion, { 
+  foreignKey: 'usuario_id', 
+  as: 'predicciones' 
+});
+Prediccion.belongsTo(Usuario, { 
+  foreignKey: 'usuario_id', 
+  as: 'usuario' 
+});
+
 app.use('/api/predicciones', prediccionRoutes);
 
-// Encendido del servidor y sincronización
-const iniciarServidor = async () => {
+const conectarDB = async () => {
   try {
     await db.authenticate();
-    console.log('✅ Conexión a la base de datos establecida.');
-    
-    // Sincroniza el código con las tablas existentes
-    await db.sync({ alter: true }); 
-    
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor de mi_casino corriendo en puerto ${PORT}`);
-      console.log(`📡 Docker network: OK`);
-    });
+    // force: true borrará las tablas Prediccion/Usuarios mal creadas
+    await db.sync({ force: true });
+    console.log('✅ Base de datos sincronizada: usuarios y predicciones creadas.');
   } catch (error) {
-    console.error('❌ No se pudo conectar a la base de datos:', error);
+    console.error('❌ Error de conexión:', error);
   }
 };
 
-iniciarServidor();
+conectarDB();
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+});

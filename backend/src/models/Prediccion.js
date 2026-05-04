@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import db from '../config/db.js';
-import Usuario from './Usuario.js';
 
 const Prediccion = db.define('Prediccion', {
   id: {
@@ -14,14 +13,14 @@ const Prediccion = db.define('Prediccion', {
   },
   probabilidad: {
     type: DataTypes.FLOAT,
-    defaultValue: 1.0 
-  } 
+    defaultValue: 1.0
+  }
 }, {
   timestamps: true,
-  tableName: 'prediccions'
+  underscored: true,
+  tableName: 'predicciones',
+  freezeTableName: true
 });
 
-// Relación
-Prediccion.belongsTo(Usuario, { foreignKey: 'usuarioId' });
-
+// IMPORTANTE: NO pongas belongsTo aquí.
 export default Prediccion;
