@@ -204,6 +204,12 @@ function memoriaGanar() {
   guardarDato('Memoria: eficiencia',      `${eficiencia}%`);
   guardarDato('Memoria: coins ganadas',   `+${coins} 🪙`);
 
+  if (typeof window.marcarMinijuegoJugado === 'function') {
+    window.marcarMinijuegoJugado('memoria');
+  } else {
+    localStorage.setItem('memoria_jugado', 'true');
+  }
+
   const P = document.getElementById('juego-panel');
   P.innerHTML = `
     <h2>🃏 ¡Completado!</h2>
@@ -213,9 +219,7 @@ function memoriaGanar() {
         ${EMOJIS_MEM.length} pares · ${memIntentos} intentos · ${memBarajadas} errores · ${eficiencia}% eficiencia
       </div>
     </div>
-    <button class="btn btn-gold" id="mem-replay">Jugar de nuevo</button>
   `;
-  document.getElementById('mem-replay').addEventListener('click', memoriaInit);
 }
 
 function memoriaPerder(motivo) {
@@ -228,6 +232,12 @@ function memoriaPerder(motivo) {
   guardarDato('Memoria: intentos',         memIntentos);
   guardarDato('Memoria: partidas fallidas', (parseInt(d['Memoria: partidas fallidas']||0)+1));
 
+  if (typeof window.marcarMinijuegoJugado === 'function') {
+    window.marcarMinijuegoJugado('memoria');
+  } else {
+    localStorage.setItem('memoria_jugado', 'true');
+  }
+
   const P = document.getElementById('juego-panel');
   P.innerHTML = `
     <h2>🃏 ${motivo === 'tiempo agotado' ? '⏱ Tiempo agotado' : '🔥 Demasiados errores'}</h2>
@@ -235,7 +245,5 @@ function memoriaPerder(motivo) {
       <div class="coins-perdidas">-${multa} 🪙</div>
       <div class="resultado-detalle">${motivo === 'tiempo agotado' ? 'Se acabó el tiempo.' : 'Cuatro errores — tablero destruido.'}</div>
     </div>
-    <button class="btn btn-gold" id="mem-replay">Intentar de nuevo</button>
   `;
-  document.getElementById('mem-replay').addEventListener('click', memoriaInit);
 }

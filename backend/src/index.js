@@ -25,8 +25,8 @@ app.use('/api/predicciones', prediccionRoutes);
 const conectarDB = async () => {
   try {
     await db.authenticate();
-    await db.sync({ force: false });
-    console.log('✅ Conexión exitosa y tablas creadas: usuarios, predicciones');
+    await db.sync({ force: false, alter: true });
+    console.log('✅ Conexión exitosa y tablas sincronizadas: usuarios, predicciones');
   } catch (error) {
     console.error('❌ Error de conexión:', error);
   }

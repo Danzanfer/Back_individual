@@ -241,6 +241,12 @@ function frecuenciasMostrarFinal() {
   const edadFinal = frecuenciasEdad(medHz);
   const medLabel  = medHz < 1000 ? Math.round(medHz) + ' Hz' : (medHz/1000).toFixed(1) + ' kHz';
 
+  if (typeof window.marcarMinijuegoJugado === 'function') {
+    window.marcarMinijuegoJugado('frecuencias');
+  } else {
+    localStorage.setItem('frecuencias_jugado', 'true');
+  }
+
   guardarDato('Frecuencias: edad estimada (mediana)', edadFinal);
   guardarDato('Frecuencias: frecuencia mediana',       medLabel);
   guardarDato('Frecuencias: tests completados',        '3/3');
@@ -264,13 +270,5 @@ function frecuenciasMostrarFinal() {
           </div>`).join('')}
       </div>
     </div>
-
-    <button class="btn btn-ghost" id="freq-reset">Reiniciar tests</button>
   `;
-
-  document.getElementById('freq-reset').addEventListener('click', () => {
-    localStorage.removeItem('freq_resultados');
-    freqResultados = [];
-    frecuenciasRender();
-  });
 }

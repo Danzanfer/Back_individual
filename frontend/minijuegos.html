@@ -51,6 +51,7 @@
     </div>
   </div>
 
+  <div class="juego-status" id="minijuegos-status"></div>
   <div class="juego-panel" id="juego-panel"></div>
 
   <div class="datos-panel">
@@ -68,14 +69,65 @@
 <script src="js/frecuencias.js"></script>
 
 <script>
+  window.JuegosMinijuegos = {
+    keys: ['bart','memoria','frecuencias'],
+    jugado(key) {
+      return localStorage.getItem(`${key}_jugado`) === 'true';
+    },
+    marcarJugado(key) {
+      localStorage.setItem(`${key}_jugado`, 'true');
+      this.actualizarCards();
+    },
+    disponible(key) {
+      return !this.jugado(key);
+    },
+    actualizarCards() {
+      const todasJugadas = this.keys.every(k => this.jugado(k));
+      document.querySelectorAll('.juego-card').forEach(card => {
+        const key = card.dataset.juego;
+        if (this.jugado(key)) {
+          card.classList.add('jugado');
+          card.querySelector('.desc').textContent = 'Ya jugado';
+          card.querySelector('.reward').textContent = 'No disponible';
+          card.style.pointerEvents = 'none';
+          card.style.opacity = '0.45';
+        } else {
+          card.classList.remove('jugado');
+          card.style.pointerEvents = '';
+          card.style.opacity = '';
+        }
+      });
+      const status = document.getElementById('minijuegos-status');
+      if (!status) return;
+      if (todasJugadas) {
+        status.innerHTML = '<div class="status-box">Has jugado todos los minijuegos. Ahora solo puedes comprar en la tienda para obtener más recursos.</div>';
+      } else {
+        status.innerHTML = '<div class="status-box">Juega cada minijuego una vez para recolectar recursos. Después solo queda la tienda.</div>';
+      }
+    }
+  };
+
+  window.marcarMinijuegoJugado = function(key) {
+    window.JuegosMinijuegos.marcarJugado(key);
+  };
+
   (function init() {
     Coins.init();
     renderDatos();
-    bartInit();
+    JuegosMinijuegos.actualizarCards();
+    if (!JuegosMinijuegos.jugado('bart')) {
+      bartInit();
+    } else if (!JuegosMinijuegos.jugado('memoria')) {
+      memoriaInit();
+    } else if (!JuegosMinijuegos.jugado('frecuencias')) {
+      frecuenciasInit();
+    }
 
-    // selector de juegos — limpia timers antes de cambiar
     document.querySelectorAll('.juego-card').forEach(function(card) {
       card.addEventListener('click', function() {
+        const juego = card.dataset.juego;
+        if (!JuegosMinijuegos.disponible(juego)) return;
+
         bartLimpiar();
         memoriaLimpiar();
 
@@ -84,15 +136,11 @@
         });
         card.classList.add('activo');
 
-        var juego = card.dataset.juego;
         if (juego === 'bart')        bartInit();
         if (juego === 'memoria')     memoriaInit();
         if (juego === 'frecuencias') frecuenciasInit();
       });
     });
-
-    // arrancar BART por defecto
-    
   })();
 </script>
 </body>

@@ -1,4 +1,28 @@
 const casino_datos = {
+  _vectorCompleto(vector) {
+    if (!vector) return false;
+    const tieneBJ = typeof vector.bj_partidas === 'number' && vector.bj_partidas > 0;
+    const tieneBART = vector.bart_score !== null && vector.bart_score !== undefined && vector.bart_score !== '';
+    const tieneMemoria = vector.mem_eficiencia !== null && vector.mem_eficiencia !== undefined && vector.mem_eficiencia !== '';
+    const tieneFrecuencia = vector.freq_hz !== null && vector.freq_hz !== undefined && vector.freq_hz !== '';
+    const tieneCoins = typeof vector.coins_actuales === 'number';
+
+    return tieneBJ && tieneBART && tieneMemoria && tieneFrecuencia && tieneCoins;
+  },
+
+  _chequearSincronizarIA() {
+    if (typeof Vector === 'undefined' || typeof sincronizarPerfilIA !== 'function') return;
+
+    try {
+      const vector = Vector.construir();
+      if (this._vectorCompleto(vector)) {
+        sincronizarPerfilIA();
+      }
+    } catch (e) {
+      console.warn('No se puede construir el vector completo todavía:', e);
+    }
+  },
+
   guardarDato(clave, valor) {
     try {
       const raw = localStorage.getItem('jugador_actual');
@@ -17,13 +41,7 @@ const casino_datos = {
       }
       
       this.renderDatos();
-
-      const clavesIA = ['Memoria: eficiencia', 'BART: resultado neto', 'BART: score', 'frecuencia_pago'];
-      if (clavesIA.includes(clave)) {
-        if (typeof sincronizarPerfilIA === 'function') {
-          sincronizarPerfilIA();
-        }
-      }
+      this._chequearSincronizarIA();
     } catch (e) {
       console.error("Error en guardarDato:", e);
     }
@@ -49,9 +67,7 @@ const casino_datos = {
         Vector.guardar();
       }
 
-      if (typeof sincronizarPerfilIA === 'function') {
-        sincronizarPerfilIA();
-      }
+      this._chequearSincronizarIA();
     } catch (e) {
       console.error("Error en registrarMetricaBJ:", e);
     }
@@ -92,8 +108,6 @@ window.renderDatos = () => casino_datos.renderDatos();
 document.addEventListener('DOMContentLoaded', () => {
   window.renderDatos();
   setTimeout(() => {
-    if (typeof sincronizarPerfilIA === 'function') {
-      sincronizarPerfilIA();
-    }
+    casino_datos._chequearSincronizarIA();
   }, 1000);
 });

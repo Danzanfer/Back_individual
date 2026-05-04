@@ -193,6 +193,12 @@ function bartFin() {
   guardarDato('BART: globos explotados', `${totalExplotados}/5`);
   guardarDato('BART: resultado neto',    `${coinsAcum>=0?'+':''}${coinsAcum} 🪙`);
 
+  if (typeof window.marcarMinijuegoJugado === 'function') {
+    window.marcarMinijuegoJugado('bart');
+  } else {
+    localStorage.setItem('bart_jugado', 'true');
+  }
+
   P.innerHTML = `
     <h2>🎈 BART completado</h2>
     <div class="resultado-box">
@@ -204,9 +210,7 @@ function bartFin() {
       </div>
     </div>
     <div style="font-family:var(--mono);font-size:0.65rem;color:var(--gold)">Perfil: ${perfil}</div>
-    <button class="btn btn-gold" id="bart-replay">Jugar de nuevo</button>
   `;
-  document.getElementById('bart-replay').addEventListener('click', bartInit);
 }
 
 

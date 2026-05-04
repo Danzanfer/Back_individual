@@ -1,28 +1,30 @@
-CREATE TABLE IF NOT EXISTS "Usuarios" (
-    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    "username" VARCHAR(255) NOT NULL,
-    "bart_riesgo" FLOAT DEFAULT 0,
-    "bart_explosiones" INTEGER DEFAULT 0,
-    "mem_eficiencia" INTEGER DEFAULT 0,
-    "mem_velocidad" FLOAT DEFAULT 0,
-    "bj_winrate" FLOAT DEFAULT 0,
-    "coins" INTEGER DEFAULT 0,
-    "ciudad" VARCHAR(255),
-    "clima" VARCHAR(255),
-    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS usuarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) NOT NULL,
+    bart_riesgo FLOAT DEFAULT 0,
+    bart_explosiones INTEGER DEFAULT 0,
+    mem_eficiencia INTEGER DEFAULT 0,
+    mem_velocidad FLOAT DEFAULT 0,
+    bj_winrate FLOAT DEFAULT 0,
+    coins INTEGER DEFAULT 0,
+    perfil_psicologico VARCHAR(255),
+    probabilidad_fuga FLOAT DEFAULT 0,
+    ciudad VARCHAR(255),
+    clima VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS "Prediccion" (
-    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    "perfil_ia" VARCHAR(255) NOT NULL,
-    "probabilidad" FLOAT DEFAULT 1.0,
-    "usuarioId" UUID REFERENCES "Usuarios"("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS predicciones (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    perfil_ia VARCHAR(255) NOT NULL,
+    probabilidad FLOAT DEFAULT 1.0,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-INSERT INTO "Usuarios" (username, bart_riesgo, bart_explosiones, mem_eficiencia, mem_velocidad, bj_winrate, coins, ciudad, clima) VALUES
+INSERT INTO usuarios (username, bart_riesgo, bart_explosiones, mem_eficiencia, mem_velocidad, bj_winrate, coins, ciudad, clima) VALUES
 --BAJO RIESGO (Estrategas)
 ('player_pro_1', 25.4, 2, 95, 85.2, 0.75, 5000, 'Bilbao', '18°C'),
 ('player_pro_2', 30.1, 3, 92, 90.5, 0.68, 4200, 'Madrid', '22°C'),

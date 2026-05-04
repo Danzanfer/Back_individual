@@ -2,16 +2,29 @@ import axios from 'axios';
 import Prediccion from '../models/Prediccion.js';
 import Usuario from '../models/Usuario.js';
 
+const isUuid = (value) => {
+    return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+};
+
 export const postPrediccion = async (req, res) => {
     const { jugador_actual, datos_conductuales, bj_stats, coins } = req.body;
 
     try {
-        // 1. Asegurar que el usuario existe (lo busca o lo crea)
-        // Esto evita que la DB rechace la predicción por falta de usuario
+        if (!jugador_actual || !jugador_actual.username) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Falta información de jugador_actual en el payload'
+            });
+        }
+
+        const usuarioWhere = isUuid(jugador_actual.id)
+            ? { id: jugador_actual.id }
+            : { username: jugador_actual.username };
+
         const [usuario] = await Usuario.findOrCreate({
-            where: { id: jugador_actual.id },
-            defaults: { 
-                username: `jugador_${jugador_actual.id.slice(0, 5)}`,
+            where: usuarioWhere,
+            defaults: {
+                username: jugador_actual.username,
                 coins: coins || 0
             }
         });

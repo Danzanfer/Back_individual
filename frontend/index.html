@@ -162,39 +162,6 @@
     }
   })();
 
-  async function sincronizarPerfilIA() {
-    try {
-      // Validar existencia de la clase Vector antes de operar
-      if (typeof Vector === 'undefined') return;
-      
-      const v = Vector.construir();
-      
-      const payloadIA = {
-        jugador_actual: { id: v.jugador_id, username: v.username },
-        datos_conductuales: {
-          "BART_score": v.bart_score,
-          "Memoria_eficiencia": v.mem_eficiencia
-        },
-        bj_stats: {
-          partidas: v.bj_partidas,
-          ganadas: v.bj_ganadas
-        },
-        coins: v.coins_actuales
-      };
-
-      console.log("📡 Sincronizando con IA...");
-      const respuesta = await casinoApi.enviarPerfil(payloadIA);
-
-      if (respuesta && respuesta.ok) {
-        if (typeof AdaptadorUI !== 'undefined') {
-          AdaptadorUI.aplicarConfiguracion(respuesta);
-          console.log("✨ Interfaz adaptada exitosamente");
-        }
-      }
-    } catch (error) {
-      console.error("❌ Error en sincronización IA:", error);
-    }
-  }
 </script>
 </body>
 </html>

@@ -75,43 +75,57 @@ const AdaptadorUI = {
     }
 };
 
-// FUNCIÓN DE SINCRONIZACIÓN CORREGIDA
+const normalizarNumero = (valor, fallback) => {
+    if (valor === null || valor === undefined) return fallback;
+    const numero = parseFloat(String(valor).replace(/[^0-9.-]+/g, ''));
+    return Number.isFinite(numero) ? numero : fallback;
+};
+
+const vectorCompleto = (vector) => {
+    if (!vector) return false;
+    const tieneBJ = typeof vector.bj_partidas === 'number' && vector.bj_partidas > 0;
+    const tieneBART = vector.bart_score !== null && vector.bart_score !== undefined && vector.bart_score !== '';
+    const tieneMemoria = vector.mem_eficiencia !== null && vector.mem_eficiencia !== undefined && vector.mem_eficiencia !== '';
+    const tieneFrecuencia = vector.freq_hz !== null && vector.freq_hz !== undefined && vector.freq_hz !== '';
+    const tieneCoins = typeof vector.coins_actuales === 'number';
+
+    return tieneBJ && tieneBART && tieneMemoria && tieneFrecuencia && tieneCoins;
+};
+
 async function sincronizarPerfilIA() {
-    // 1. Evitar que la función se ejecute si ya hay una petición en curso[cite: 5]
     if (estaSincronizandoIA) return;
-    
+
+    if (typeof Vector === 'undefined') {
+        console.warn("IA: Esperando a que el motor de datos esté listo...");
+        return;
+    }
+
+    const vectorDatos = Vector.construir();
+    if (!vectorCompleto(vectorDatos)) {
+        console.log("🔎 Vector incompleto: la IA esperará hasta tener datos de blackjack y minijuegos.");
+        return;
+    }
+
+    const payload = {
+        usuario_id: vectorDatos.jugador_id,
+        bart_riesgo: normalizarNumero(vectorDatos.bart_score, 0.5),
+        mem_eficiencia: normalizarNumero(vectorDatos.mem_eficiencia, 50),
+        bj_winrate: vectorDatos.bj_partidas > 0 ? (vectorDatos.bj_ganadas / vectorDatos.bj_partidas) : 0.5,
+        coins: normalizarNumero(vectorDatos.coins_actuales, 0)
+    };
+
+    estaSincronizandoIA = true;
+    console.log("🤖 Iniciando proceso de análisis de perfil con vector completo...");
+
     try {
-        if (typeof Vector === 'undefined') {
-            console.warn("IA: Esperando a que el motor de datos esté listo...");
-            return;
-        }
-
-        const vectorDatos = Vector.construir();
-        
-        // 2. CAMBIO CRÍTICO: Payload plano para que Node y Flask no den Error 500[cite: 3, 5]
-        const payload = {
-            usuario_id: vectorDatos.jugador_id,
-            bart_riesgo: vectorDatos.bart_score || 0.5,
-            mem_eficiencia: vectorDatos.mem_eficiencia || 50,
-            bj_winrate: vectorDatos.bj_partidas > 0 ? (vectorDatos.bj_ganadas / vectorDatos.bj_partidas) : 0.5,
-            coins: vectorDatos.coins_actuales || 0
-        };
-
-        estaSincronizandoIA = true;
-        console.log("🤖 Iniciando proceso de análisis de perfil...");
-
         const respuesta = await casinoApi.enviarPerfil(payload);
-
         if (respuesta) {
             console.log("✅ Respuesta de IA recibida correctamente.");
             AdaptadorUI.aplicarConfiguracion(respuesta);
         }
-
     } catch (error) {
         console.error("❌ Fallo en la sincronización:", error);
     } finally {
-        // 3. Cooldown: Esperar 5 segundos antes de permitir otra sincronización
-        // Esto detiene el bucle infinito que tenías en la consola[cite: 5]
         setTimeout(() => {
             estaSincronizandoIA = false;
         }, 5000);

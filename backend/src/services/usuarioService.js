@@ -48,7 +48,7 @@ class UsuarioService {
         await Prediccion.create({
           perfil_ia: cluster.toString(),
           probabilidad: 0.85, // Ejemplo
-          usuarioId: registroUsuario.id
+          usuario_id: registroUsuario.id
         });
 
         // Devolver el perfil para la respuesta del API
